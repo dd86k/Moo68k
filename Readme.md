@@ -3,8 +3,10 @@
 
 "Let's make a binary compatible m68k emulator in C#" I said.
 
-Please refer to the [Programmer Reference Manual](https://www.nxp.com/files/archives/doc/ref_manual/M68000PRM.pdf) (M68000PRM.pdf) before addressing (get it?) an issue.
+A simulator would just try to reproduce behavior, in this case I try to actually emulate an m68k.
 
-Currently, it's not even at a useable state.
+Please refer to the [Programmer Reference Manual](https://www.nxp.com/files/archives/doc/ref_manual/M68000PRM.pdf) (M68000PRM.pdf by Motorola) before addressing (get it?) an issue.
 
-No regrets.
+**Note:** Not in an useable state.
+
+Irregular updates, no regrets.

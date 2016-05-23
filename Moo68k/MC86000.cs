@@ -61,17 +61,119 @@ namespace Moo68k
         // Constants ⁄(⁄ ⁄•⁄ω⁄•⁄ ⁄)⁄
 
         const ushort SR_INIT = 0x2700;
+        const int S0_SHIFT = 8;
+        const int S1_SHIFT = 6;
 
         // Properties ヽ(•̀ω•́ )ゝ
 
+        public uint D0
+        {
+            get { return dataRegisters[0]; }
+            private set { dataRegisters[0] = value; }
+        }
+        public uint D1
+        {
+            get { return dataRegisters[1]; }
+            private set { dataRegisters[1] = value; }
+        }
+        public uint D2
+        {
+            get { return dataRegisters[2]; }
+            private set { dataRegisters[2] = value; }
+        }
+        public uint D3
+        {
+            get { return dataRegisters[3]; }
+            private set { dataRegisters[3] = value; }
+        }
+        public uint D4
+        {
+            get { return dataRegisters[4]; }
+            private set { dataRegisters[4] = value; }
+        }
+        public uint D5
+        {
+            get { return dataRegisters[5]; }
+            private set { dataRegisters[5] = value; }
+        }
+        public uint D6
+        {
+            get { return dataRegisters[6]; }
+            private set { dataRegisters[6] = value; }
+        }
+        public uint D7
+        {
+            get { return dataRegisters[7]; }
+            private set { dataRegisters[7] = value; }
+        }
+        uint[] dataRegisters;
+
         /// <summary>
-        /// Data register.
+        /// Address register A0
         /// </summary>
-        public uint D0, D1, D2, D3, D4, D5, D6, D7;
+        public uint A0
+        {
+            get { return addressRegisters[0]; }
+            private set { addressRegisters[0] = value; }
+        }
         /// <summary>
-        /// Address register.
+        /// Address register A1
         /// </summary>
-        public uint A0, A1, A2, A3, A4, A5, A6, A7;
+        public uint A1
+        {
+            get { return addressRegisters[1]; }
+            private set { addressRegisters[1] = value; }
+        }
+        /// <summary>
+        /// Address register A2
+        /// </summary>
+        public uint A2
+        {
+            get { return addressRegisters[2]; }
+            private set { addressRegisters[2] = value; }
+        }
+        /// <summary>
+        /// Address register A3
+        /// </summary>
+        public uint A3
+        {
+            get { return addressRegisters[3]; }
+            private set { addressRegisters[3] = value; }
+        }
+        /// <summary>
+        /// Address register A4
+        /// </summary>
+        public uint A4
+        {
+            get { return addressRegisters[4]; }
+            private set { addressRegisters[4] = value; }
+        }
+        /// <summary>
+        /// Address register A5
+        /// </summary>
+        public uint A5
+        {
+            get { return addressRegisters[5]; }
+            private set { addressRegisters[5] = value; }
+        }
+        /// <summary>
+        /// Address register A6
+        /// </summary>
+        public uint A6
+        {
+            get { return addressRegisters[6]; }
+            private set { addressRegisters[6] = value; }
+        }
+        /// <summary>
+        /// Address register A7
+        /// </summary>
+        public uint A7
+        {
+            get { return addressRegisters[7]; }
+            private set { addressRegisters[7] = value; }
+        }
+        uint[] addressRegisters;
+
         /// <summary>
         /// User Stack Pointer (A7')
         /// </summary>
@@ -126,6 +228,9 @@ namespace Moo68k
 
         public MC86000()
         {
+            dataRegisters = new uint[8];
+            addressRegisters = new uint[8];
+
             Memory = new MemoryModule();
 
             Memory.Bank = new byte[MEM_MAX];
@@ -135,6 +240,12 @@ namespace Moo68k
 
         // Methods ヾ(｡>﹏<｡)ﾉﾞ
 
+        /// <summary>
+        /// Asserts the RSTO signal for 512 (124 for MC68000, MC68EC000, 
+        /// MC68HC000, MC68HC001, MC68008, MC68010, and MC68302) clock periods,
+        /// resetting all external devices.The processor state, other than the program counter, is 
+        /// unaffected, and execution continues with the next instruction.
+        /// </summary>
         public void Reset()
         {
             A7 = SSP = Memory.ReadULong(0);
@@ -154,29 +265,89 @@ namespace Moo68k
 
         }
 
-        public void Execute(ushort op)
+        public void Interpret(string input)
+        {
+            //TODO: Interpret(string)
+        }
+
+        public void Execute(ushort op, uint arg = 0) // public for now..?
         {
             //TODO: Clean up (at some point)
+            
+            //TODO: tracing defined in SR register
+            Debug.Write($"{PC:X8}  {op:X4}");
+            if (arg > 0)
+                Debug.WriteLine($"  {arg:X8}");
 
-            // Big Endian
-            byte higher = (byte)(op >> 8);
-            byte lower = (byte)(op);
-
-            // Half nyblets (2 bits)
-            byte h0 = (byte)(higher >> 6);
-            byte h1 = (byte)((higher >> 4) & 3);
-            byte h2 = (byte)((higher >> 2) & 3);
-            byte h4 = (byte)(higher & 3);
-            byte l0 = (byte)(lower >> 6);
-            byte l1 = (byte)((lower >> 4) & 3);
-            byte l2 = (byte)((lower >> 2) & 3);
-            byte l4 = (byte)(lower & 3);
-
-            Debug.WriteLine($"{PC:X8}  {op:X4}");
-
-            switch (h0)
+            switch (op)
             {
-                case 0:
+                /*case 0x4AFC: //TODO: ILLEGAL
+                 * 
+                 * ILLEGAL is not in an MC68000
+                 * But in MC68EC000, MC68010, MC68020, MC68030, MC68040, CPU32
+
+                    break;*/
+                case 0x4E70: // RESET
+                    //TODO: RESET IF Supervisor State
+                    /*
+                    If Supervisor State
+                        Then Assert RESET (RSTO, MC68040 Only) Line
+                    Else TRAP
+                    */
+                    Reset();
+                    return;
+                case 0x4E71: // NOP
+                    return;
+                case 0x4E72: //TODO: STOP
+
+                    return;
+            }
+
+            // Grouping: 00 00 000 000 000 000
+            //           s0 s1 ...
+            int s0 = op >> S0_SHIFT;
+            int s1 = op >> S1_SHIFT;
+
+            switch (s0)
+            {
+                case 0: // 00
+                    {
+                        if (s1 > 0) // MOVE, MOVEA
+                        {
+                            // 00 00 000 000 000 000
+                            //       |-------------|
+                            int m0 = (op >> 9) & 7;
+                            int m1 = (op >> 6) & 7;
+                            int m2 = (op >> 3) & 7;
+                            int m3 = op & 7;
+
+
+                        }
+                        else // 00
+                        {
+
+                        }
+                    }
+                    break;
+
+                case 1: // 01
+                    {
+                        switch (s1)
+                        {
+                            case 0: // 00
+                                {
+
+                                }
+                                break;
+                        }
+                    }
+                    break;
+
+                case 2: // 10
+
+                    break;
+
+                case 3: // 11
 
                     break;
             }
