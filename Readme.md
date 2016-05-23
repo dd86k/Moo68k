@@ -1,4 +1,4 @@
-# Emuumuu
+# Moo68k
 ## A Motorola 68000 (m68k) emulator in C#. 
 
 "Let's make a binary compatible m68k emulator in C#" I said.
