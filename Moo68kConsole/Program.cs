@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Console;
 using System.Timers;
+using Moo68k;
 
 namespace Emuumuu
 {

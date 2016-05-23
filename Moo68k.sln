@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moo68k", "Moo68k\Moo68k.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moo68kUnitTest", "Moo68kUnitTest\Moo68kUnitTest.csproj", "{C08FD411-B6BD-4299-BACF-4DBE30A59B38}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moo68kConsole", "Moo68kConsole\Moo68kConsole.csproj", "{C19B1D62-940C-4D38-B5D9-1767244DE468}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{C08FD411-B6BD-4299-BACF-4DBE30A59B38}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C08FD411-B6BD-4299-BACF-4DBE30A59B38}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C08FD411-B6BD-4299-BACF-4DBE30A59B38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C19B1D62-940C-4D38-B5D9-1767244DE468}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C19B1D62-940C-4D38-B5D9-1767244DE468}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C19B1D62-940C-4D38-B5D9-1767244DE468}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C19B1D62-940C-4D38-B5D9-1767244DE468}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

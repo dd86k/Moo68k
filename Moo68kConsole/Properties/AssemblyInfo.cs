@@ -1,17 +1,16 @@
-﻿using System.Resources;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Moo68k")]
-[assembly: AssemblyDescription("A Motorola 68000 microprocessor emulator.")]
+[assembly: AssemblyTitle("Moo68kConsole")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Moo68k")]
-[assembly: AssemblyCopyright("Copyright © guitarxhero 2016")]
+[assembly: AssemblyProduct("Moo68kConsole")]
+[assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -21,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("14c11e14-fba6-43a0-ab47-37cc2006d018")]
+[assembly: Guid("c19b1d62-940c-4d38-b5d9-1767244de468")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -33,7 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.0.0.0")]
-[assembly: AssemblyFileVersion("0.0.0.0")]
-[assembly: NeutralResourcesLanguage("en")]
-
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

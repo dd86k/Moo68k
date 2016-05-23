@@ -22,16 +22,16 @@ using System.Threading.Tasks;
  *     
  */
 
-namespace Emuumuu
+namespace Moo68k
 {
     [Flags]
-    enum CCRFlags : byte
+    public enum CCRFlags : byte
     {
         C = 1, V = 2, Z = 4, N = 8, X = 16
     }
 
     [Flags]
-    enum CCRFlagsSimplified : byte
+    public enum CCRFlagsSimplified : byte
     {
         Carry = 1, Overflow = 2, Zero = 4, Negative = 8, Extend = 16
     }
@@ -56,7 +56,7 @@ namespace Emuumuu
     /// Data width: 16 b
     /// Address width: 24 b
     /// </remarks>
-    class MC86000
+    public class MC86000
     {
         // Constants ⁄(⁄ ⁄•⁄ω⁄•⁄ ⁄)⁄
 
