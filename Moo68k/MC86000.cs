@@ -241,10 +241,10 @@ namespace Moo68k
         // Methods ヾ(｡>﹏<｡)ﾉﾞ
 
         /// <summary>
-        /// Asserts the RSTO signal for 512 (124 for MC68000, MC68EC000, 
-        /// MC68HC000, MC68HC001, MC68008, MC68010, and MC68302) clock periods,
-        /// resetting all external devices.The processor state, other than the program counter, is 
-        /// unaffected, and execution continues with the next instruction.
+        /// Asserts the RSTO signal for 124 clock periods,
+        /// resetting all external devices. The processor state,
+        /// other than the program counter, is unaffected,
+        /// and execution continues with the next instruction.
         /// </summary>
         public void Reset()
         {
@@ -257,12 +257,12 @@ namespace Moo68k
 
         public void Step()
         {
-
+            //TODO: Step(void)
         }
         
         public void Insert(ushort op) // into the stack??
         {
-
+            //TODO: Insert(ushort)
         }
 
         public void Interpret(string input)
@@ -314,16 +314,20 @@ namespace Moo68k
                     {
                         if (s1 > 0) // MOVE, MOVEA
                         {
-                            // 00 00 000 000 000 000
-                            //       |-------------|
+                            // Page 4-116 of M68000PRM.pdf
+                            // Size (s1)            - 00[00]000 000 000 000
+                            // Destination register - 00 00[000]000 000 000
                             int m0 = (op >> 9) & 7;
+                            // Destination mode     - 00 00 000[000]000 000
                             int m1 = (op >> 6) & 7;
+                            // Source mode          - 00 00 000 000[000]000
                             int m2 = (op >> 3) & 7;
+                            // Source register      - 00 00 000 000 000[000]
                             int m3 = op & 7;
-
+                            
 
                         }
-                        else // 00
+                        else
                         {
 
                         }
