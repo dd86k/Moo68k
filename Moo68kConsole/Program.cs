@@ -17,13 +17,11 @@ namespace Emuumuu
             WriteLine("Creating MC86000...");
             MC86000 m68k = new MC86000();
 
-            WriteLine("Resetting...");
-            m68k.Reset();
+            WriteLine("Enabling tracing...");
+            m68k.TracingEnabled = true;
 
             WriteLine("Running random stuff...");
-
             Random r = new Random();
-
             int max = ushort.MaxValue;
             while (true)
             {

@@ -20,7 +20,7 @@ using System.Threading.Tasks;
  * Decide what to make as public property.
  *     
  * Base class or interface?
- *     
+ *     Probably class.
  */
 
 namespace Moo68k
@@ -62,8 +62,6 @@ namespace Moo68k
         // Constants ⁄(⁄ ⁄•⁄ω⁄•⁄ ⁄)⁄
 
         const ushort SR_INIT = 0x2700;
-        //const int S0_SHIFT = 8;
-        //const int S1_SHIFT = 6;
 
         // Properties ヽ(•̀ω•́ )ゝ
 
@@ -191,7 +189,7 @@ namespace Moo68k
         /// <summary>
         /// Condition Code Register
         /// </summary>
-        public byte CCR { get { return (byte)(SR & 5); } }
+        public byte CCR { get { return (byte)(SR & 0x1F); } }
 
         /// <summary>
         /// Status Register
@@ -203,9 +201,18 @@ namespace Moo68k
         ///                         User mode |-----------|
         /// </remarks>
         public ushort SR { get; private set; }
-        public bool TracingEnabled { get { return (SR & 0x8000) != 0; } }
-
-
+        public bool TracingEnabled
+        {
+            get { return (SR & 0x8000) != 0; }
+            set
+            {
+                if (value)
+                    SR |= 0x8000;
+                else
+                    SR = (ushort)(SR & ~0x8000);
+            }
+        }
+        
         /* In later models... (MC68040 and the MC68881/MC68882)
         float FP0, FP1, FP2, FP3, FP4, FP5, FP6, FP7; // Floating-Point Data Registers (80 bits?)
         ushort FPCR; // Floating-Point Control Register (IEEE 754)
@@ -238,7 +245,7 @@ namespace Moo68k
 
             Memory.Bank = new byte[MEM_MAX];
 
-            //TODO: Power-up state
+            Reset();
         }
 
         // Methods ヾ(｡>﹏<｡)ﾉﾞ
@@ -279,21 +286,13 @@ namespace Moo68k
 
             if (TracingEnabled)
             {
-                Debug.Write($"{PC:X8}  {op:X4}");
-                if (arg > 0)
-                    Debug.WriteLine($"  {arg:X8}");
+                Debug.WriteLine($"{PC:X8}  {op:X4}  {arg:X8}");
             }
 
             switch (op)
             {
-                /*case 0x4AFC: //TODO: ILLEGAL
-                 * 
-                 * ILLEGAL is not included in the MC68000
-                 * But in MC68EC000, MC68010, MC68020, MC68030, MC68040, CPU32
-                 * 
-                 * So.. What would it do? A NOP?
-
-                    break;*/
+                case 0x4AFC: //TODO: ILLEGAL
+                    break;
                 case 0x4E70: // RESET
                     //TODO: RESET IF Supervisor State
                     /*
@@ -326,9 +325,9 @@ namespace Moo68k
                     break;
 
                 // 0001~0011 - MOVE, MOVEA
-                case 1:
-                case 2:
-                case 3:
+                case 1: // Move byte
+                case 2: // Move long
+                case 3: // Move word
                     {
                         // Page 4-116
                         // Size (s1)            - 00[00]000 000 000 000
