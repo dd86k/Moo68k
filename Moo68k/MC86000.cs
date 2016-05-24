@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -305,8 +306,8 @@ namespace Moo68k
 
             // Grouping: 00 00 000 000 000 000
             //           s0 s1 ...
-            int s0 = op >> S0_SHIFT;
-            int s1 = op >> S1_SHIFT;
+            int s0 = op & 0xC000;
+            int s1 = op & 0x3000;
 
             switch (s0)
             {
@@ -317,11 +318,11 @@ namespace Moo68k
                             // Page 4-116 of M68000PRM.pdf
                             // Size (s1)            - 00[00]000 000 000 000
                             // Destination register - 00 00[000]000 000 000
-                            int m0 = (op >> 9) & 7;
+                            int m0 = op & 0xE00; //(op >> 9) & 7;
                             // Destination mode     - 00 00 000[000]000 000
-                            int m1 = (op >> 6) & 7;
+                            int m1 = op & 0x1C0; //(op >> 6) & 7;
                             // Source mode          - 00 00 000 000[000]000
-                            int m2 = (op >> 3) & 7;
+                            int m2 = op & 0x38;  //(op >> 3) & 7;
                             // Source register      - 00 00 000 000 000[000]
                             int m3 = op & 7;
                             
@@ -370,7 +371,24 @@ namespace Moo68k
     /// </summary>
     static class M68000Tools
     {
+        const int DATA_BUS_WIDTH = 16;
+        
+        public static void CompileToFile(string path)
+        {
+            CompileToFile(path, Encoding.ASCII);
+        }
 
+        public static void CompileToFile(string path, Encoding encoding, bool capitalized = true)
+        {
+            //TODO: CompileToFile(string)
+
+            using (StreamWriter sw = new StreamWriter(path, false, encoding))
+            {
+
+
+
+            }
+        }
     }
 
     public class MemoryModule // static class for now
