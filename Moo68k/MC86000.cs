@@ -62,8 +62,8 @@ namespace Moo68k
         // Constants ⁄(⁄ ⁄•⁄ω⁄•⁄ ⁄)⁄
 
         const ushort SR_INIT = 0x2700;
-        const int S0_SHIFT = 8;
-        const int S1_SHIFT = 6;
+        //const int S0_SHIFT = 8;
+        //const int S1_SHIFT = 6;
 
         // Properties ヽ(•̀ω•́ )ゝ
 
@@ -191,17 +191,19 @@ namespace Moo68k
         /// <summary>
         /// Condition Code Register
         /// </summary>
-        /// <remarks>
-        /// 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
-        ///  T     S  M  0     I     0  0  0  X  N  Z  V  C
-        ///                         User mode |-----------|
-        /// </remarks>
         public byte CCR { get { return (byte)(SR & 5); } }
 
         /// <summary>
         /// Status Register
         /// </summary>
+        /// <remarks>
+        /// 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
+        ///  T     S  M  0     I     0  0  0  X  N  Z  V  C
+        ///  0  0  1  0  0  1  1  1  0  0  0  0  0  0  0  0 - Reset (0x2700)
+        ///                         User mode |-----------|
+        /// </remarks>
         public ushort SR { get; private set; }
+        public bool TracingEnabled { get { return (SR & 0x8000) != 0; } }
 
 
         /* In later models... (MC68040 and the MC68881/MC68882)
@@ -274,18 +276,22 @@ namespace Moo68k
         public void Execute(ushort op, uint arg = 0) // public for now..?
         {
             //TODO: Clean up (at some point)
-            
-            //TODO: tracing defined in SR register
-            Debug.Write($"{PC:X8}  {op:X4}");
-            if (arg > 0)
-                Debug.WriteLine($"  {arg:X8}");
+
+            if (TracingEnabled)
+            {
+                Debug.Write($"{PC:X8}  {op:X4}");
+                if (arg > 0)
+                    Debug.WriteLine($"  {arg:X8}");
+            }
 
             switch (op)
             {
                 /*case 0x4AFC: //TODO: ILLEGAL
                  * 
-                 * ILLEGAL is not in an MC68000
+                 * ILLEGAL is not included in the MC68000
                  * But in MC68EC000, MC68010, MC68020, MC68030, MC68040, CPU32
+                 * 
+                 * So.. What would it do? A NOP?
 
                     break;*/
                 case 0x4E70: // RESET
@@ -303,57 +309,124 @@ namespace Moo68k
 
                     return;
             }
-
+            
             // Grouping: 00 00 000 000 000 000
-            //           s0 s1 ...
-            int s0 = op & 0xC000;
-            int s1 = op & 0x3000;
+            //           |---| ...
+            //            op
+            int s = op & 0xF000;
 
-            switch (s0)
+            // Page 8-4, 8.2 OPERATION CODE MAP
+            switch (s)
             {
-                case 0: // 00
+                // 0000 - Bit manipulation
+                case 0:
                     {
-                        if (s1 > 0) // MOVE, MOVEA
-                        {
-                            // Page 4-116 of M68000PRM.pdf
-                            // Size (s1)            - 00[00]000 000 000 000
-                            // Destination register - 00 00[000]000 000 000
-                            int m0 = op & 0xE00; //(op >> 9) & 7;
-                            // Destination mode     - 00 00 000[000]000 000
-                            int m1 = op & 0x1C0; //(op >> 6) & 7;
-                            // Source mode          - 00 00 000 000[000]000
-                            int m2 = op & 0x38;  //(op >> 3) & 7;
-                            // Source register      - 00 00 000 000 000[000]
-                            int m3 = op & 7;
-                            
 
-                        }
-                        else
-                        {
-
-                        }
                     }
                     break;
 
-                case 1: // 01
+                // 0001~0011 - MOVE, MOVEA
+                case 1:
+                case 2:
+                case 3:
                     {
-                        switch (s1)
-                        {
-                            case 0: // 00
-                                {
+                        // Page 4-116
+                        // Size (s1)            - 00[00]000 000 000 000
+                        // Destination register - 00 00[000]000 000 000
+                        int m0 = op & 0xE00; //(op >> 9) & 7;
+                        // Destination mode     - 00 00 000[000]000 000
+                        int m1 = op & 0x1C0; //(op >> 6) & 7;
+                        // Source mode          - 00 00 000 000[000]000
+                        int m2 = op & 0x38;  //(op >> 3) & 7;
+                        // Source register      - 00 00 000 000 000[000]
+                        int m3 = op & 7;
 
-                                }
-                                break;
-                        }
+
                     }
                     break;
 
-                case 2: // 10
+                // 0100 - Miscellaneous
+                case 4:
+                    {
 
+                    }
                     break;
 
-                case 3: // 11
+                // 0101 - ADDQ/SUBQ/Scc/DBcc/TRAPc c
+                case 5:
+                    {
 
+                    }
+                    break;
+
+                // 0110 - Bcc/BSR/BRA
+                case 6:
+                    {
+
+                    }
+                    break;
+
+                // 0111 - MOVEQ
+                case 7:
+                    {
+
+                    }
+                    break;
+
+                // 1000 - OR/DIV/SBCD
+                case 8:
+                    {
+
+                    }
+                    break;
+
+                // 1001 - SUB/SUBX
+                case 9:
+                    {
+
+                    }
+                    break;
+
+                // 1010 - (Unassigned, Reserved)
+                case 10:
+                    {
+
+                    }
+                    break;
+
+                // 1011 - CMP/EOR
+                case 11:
+                    {
+
+                    }
+                    break;
+
+                // 1100 - AND/MUL/ABCD/EXG
+                case 12:
+                    {
+
+                    }
+                    break;
+
+                // 1101 - ADD/ADDX
+                case 13:
+                    {
+
+                    }
+                    break;
+
+                // 1110 - Shift/Rotate/Bit Field
+                case 14:
+                    {
+
+                    }
+                    break;
+
+                // 1111 - Coprocessor Interface/ MC68040 and CPU32 Extensions
+                case 15:
+                    {
+
+                    }
                     break;
             }
         }
@@ -369,26 +442,33 @@ namespace Moo68k
     /// <summary>
     /// Compilers, decompilers, S-Record file maker, etc.
     /// </summary>
-    static class M68000Tools
+    public static class M68000Tools
     {
         const int DATA_BUS_WIDTH = 16;
-        
-        public static void CompileToFile(string path)
-        {
-            CompileToFile(path, Encoding.ASCII);
-        }
 
-        public static void CompileToFile(string path, Encoding encoding, bool capitalized = true)
-        {
-            //TODO: CompileToFile(string)
+        public enum FileFormat : byte { S19 = 16, S28 = 24, S37 = 32 }
 
-            using (StreamWriter sw = new StreamWriter(path, false, encoding))
+        static class SRecord
+        {
+            public static void CompileToFile(string path, FileFormat format)
             {
+                CompileToFile(path, format, Encoding.ASCII);
+            }
+
+            public static void CompileToFile(string path, FileFormat format, Encoding encoding, bool capitalized = true)
+            {
+                //TODO: CompileToFile(string)
+
+                using (StreamWriter sw = new StreamWriter(path, false, encoding))
+                {
 
 
 
+                }
             }
         }
+
+
     }
 
     public class MemoryModule // static class for now
