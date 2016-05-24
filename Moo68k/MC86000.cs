@@ -285,37 +285,16 @@ namespace Moo68k
             //TODO: Clean up (at some point)
 
             if (TracingEnabled)
-            {
-                Debug.WriteLine($"{PC:X8}  {op:X4}  {arg:X8}");
-            }
+                Trace.WriteLine($"{PC:X8}  {op:X4}  {arg:X8}");
 
-            switch (op)
-            {
-                case 0x4AFC: //TODO: ILLEGAL
-                    break;
-                case 0x4E70: // RESET
-                    //TODO: RESET IF Supervisor State
-                    /*
-                    If Supervisor State
-                        Then Assert RESET (RSTO, MC68040 Only) Line
-                    Else TRAP
-                    */
-                    Reset();
-                    return;
-                case 0x4E71: // NOP
-                    return;
-                case 0x4E72: //TODO: STOP
-
-                    return;
-            }
-            
-            // Grouping: 00 00 000 000 000 000
-            //           |---| ...
-            //            op
-            int s = op & 0xF000;
+            // Grouping: 0000 0000 0000 0000
+            //           |--| ...
+            //            oc
+            // Operation Code
+            int oc = op & 0xF000;
 
             // Page 8-4, 8.2 OPERATION CODE MAP
-            switch (s)
+            switch (oc)
             {
                 // 0000 - Bit manipulation
                 case 0:
@@ -330,7 +309,8 @@ namespace Moo68k
                 case 3: // Move word
                     {
                         // Page 4-116
-                        // Size (s1)            - 00[00]000 000 000 000
+                        // Size                 - 00[00]000 000 000 000
+                        int sz = op & 0x3000;
                         // Destination register - 00 00[000]000 000 000
                         int m0 = op & 0xE00; //(op >> 9) & 7;
                         // Destination mode     - 00 00 000[000]000 000
@@ -347,7 +327,43 @@ namespace Moo68k
                 // 0100 - Miscellaneous
                 case 4:
                     {
+                        switch (op)
+                        {
+                            case 0x4AFC: //TODO: ILLEGAL
+                                break;
+                            case 0x4E70: // RESET
+                                         //TODO: RESET IF Supervisor State
+                                         /*
+                                         If Supervisor State
+                                             Then Assert RESET (RSTO, MC68040 Only) Line
+                                         Else TRAP
+                                         */
+                                Reset();
+                                return;
+                            case 0x4E71: // NOP
+                                return;
+                            case 0x4E72: //TODO: STOP
 
+                                return;
+                            case 0x4E73: //TODO: RTE
+
+                                break;
+                            case 0x4E75: //TODO: RTS
+
+                                break;
+                            case 0x4E76: //TODO: TRAPV
+
+                                break;
+                            case 0x4E77: //TODO: RTR
+
+                                break;
+
+                            default:
+                                {
+
+                                }
+                                break;
+                        }
                     }
                     break;
 
@@ -386,7 +402,7 @@ namespace Moo68k
                     }
                     break;
 
-                // 1010 - (Unassigned, Reserved)
+                // 1010 - Unassigned, Reserved
                 case 10:
                     {
 
@@ -421,7 +437,7 @@ namespace Moo68k
                     }
                     break;
 
-                // 1111 - Coprocessor Interface/ MC68040 and CPU32 Extensions
+                // 1111 - Coprocessor Interface/MC68040 and CPU32 Extensions
                 case 15:
                     {
 
