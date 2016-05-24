@@ -288,10 +288,10 @@ namespace Moo68k
                 Trace.WriteLine($"{PC:X8}  {op:X4}  {arg:X8}");
 
             // Grouping: 0000 0000 0000 0000
-            //           |--| ...
+            //           |--|
             //            oc
             // Operation Code
-            int oc = op & 0xF000;
+            int oc = (op & 0xF000) >> 12;
 
             // Page 8-4, 8.2 OPERATION CODE MAP
             switch (oc)
@@ -310,15 +310,18 @@ namespace Moo68k
                     {
                         // Page 4-116
                         // Size                 - 00[00]000 000 000 000
-                        int sz = op & 0x3000;
+                        int sz = (op & 0x3000) >> 12;
                         // Destination register - 00 00[000]000 000 000
-                        int m0 = op & 0xE00; //(op >> 9) & 7;
+                        int m0 = (op & 0xE00) >> 9;
                         // Destination mode     - 00 00 000[000]000 000
-                        int m1 = op & 0x1C0; //(op >> 6) & 7;
+                        int m1 = (op & 0x1C0) >> 6;
                         // Source mode          - 00 00 000 000[000]000
-                        int m2 = op & 0x38;  //(op >> 3) & 7;
+                        int m2 = (op & 0x38) >> 3;
                         // Source register      - 00 00 000 000 000[000]
                         int m3 = op & 7;
+
+                        if (TracingEnabled)
+                            Trace.WriteLine($"sz={sz:x2} m0={m0:x2} m1={m1:x2} m2={m2:x2} m3={m3:x2}");
 
 
                     }
