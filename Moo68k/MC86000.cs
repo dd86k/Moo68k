@@ -303,44 +303,107 @@ namespace Moo68k
                     }
                     break;
 
-                // 0001~0011 - MOVE, MOVEA
+                // 0001~0011
                 case 1: // Move byte
                 case 2: // Move long
                 case 3: // Move word
                     {
-                        // Page 4-116
-                        // Size                 - 00[00]000 000 000 000
-                        int sz = (op & 0x3000) >> 12;
-                        // Destination register - 00 00[000]000 000 000
-                        int m0 = (op & 0xE00) >> 9;
-                        // Destination mode     - 00 00 000[000]000 000
-                        int m1 = (op & 0x1C0) >> 6;
-                        // Source mode          - 00 00 000 000[000]000
-                        int m2 = (op & 0x38) >> 3;
-                        // Source register      - 00 00 000 000 000[000]
-                        int m3 = op & 7;
+                        // Size, Page 4-116
+                        int sz = (op & 0x3000) >> 12; // 00[00]000 000 000 000
+
+                        // Desition, Page 4-117
+                        // Destination register          00 00[000]000 000 000
+                        int dr = (op & 0xE00) >> 9;
+                        // Destination mode              00 00 000[000]000 000
+                        int dm = (op & 0x1C0) >> 6;
+                        
+                        // Source, Page 4-118
+                        // Source mode                   00 00 000 000[000]000
+                        int sm = (op & 0x38) >> 3;
+                        // Source register               00 00 000 000 000[000]
+                        int sr = op & 7;
 
                         if (TracingEnabled)
-                            Trace.WriteLine($"sz={sz:x2} m0={m0:x2} m1={m1:x2} m2={m2:x2} m3={m3:x2}");
+                            Trace.WriteLine($"sz={sz:x2} dr={dr:x2} dm={dm:x2} sm={sm:x2} sr={sr:x2}");
 
+                        switch (sm) // Source Effective Address field
+                        {
+                            case 0: // 000 Dn
+                                switch (dm) // Destination mode
+                                {
+                                    // Where to put An/#<DATA>/(d16,PC)/(d8,PC,Xn)? Probably ILLEGAL (default)
 
+                                    case 0: // 000 Dn -- Data register
+
+                                        break;
+                                    case 2: // 010 (An)
+
+                                        break;
+                                    case 3: // 011 (An)+
+
+                                        break;
+                                    case 4: // 100 -(An)
+
+                                        break;
+                                    case 5: // 101 (d16, An)
+
+                                        break;
+                                    case 6: // 110 (d8, An, Xn) 
+
+                                        break;
+                                    case 7: // 111
+                                        switch (dr)
+                                        {
+                                            case 0: // Word
+
+                                                break;
+                                            case 1: // Long
+
+                                                break;
+                                        }
+                                        break;
+                                }
+                                break;
+                            case 1: // 001 An
+
+                                break;
+                            case 2: // 010 (An)
+
+                                break;
+                            case 3: // 011 (An)+
+
+                                break;
+                            case 4: // 100 -(An)
+
+                                break;
+                            case 5: // 101 (d16, An)
+
+                                break;
+                            case 6: // 110 (d8, An, Xn)
+
+                                break;
+                            case 7: // 111
+
+                                break;
+                        }
                     }
                     break;
 
                 // 0100 - Miscellaneous
                 case 4:
                     {
+                        // Some hardcoded opcodes
                         switch (op)
                         {
                             case 0x4AFC: //TODO: ILLEGAL
                                 break;
                             case 0x4E70: // RESET
-                                         //TODO: RESET IF Supervisor State
-                                         /*
-                                         If Supervisor State
-                                             Then Assert RESET (RSTO, MC68040 Only) Line
-                                         Else TRAP
-                                         */
+                                //TODO: RESET IF Supervisor State
+                                /*
+                                If Supervisor State
+                                    Then Assert RESET (RSTO, MC68040 Only) Line
+                                Else TRAP
+                                */
                                 Reset();
                                 return;
                             case 0x4E71: // NOP
@@ -462,12 +525,21 @@ namespace Moo68k
     /// </summary>
     public static class M68000Tools
     {
-        const int DATA_BUS_WIDTH = 16;
+        /* Notes
+         * - Abuse << to push in bits while compiling
+         */
 
+        const int DATA_BUS_WIDTH = 16;
+        
         public enum FileFormat : byte { S19 = 16, S28 = 24, S37 = 32 }
 
         static class SRecord
         {
+            public static void CompileToFile(string path)
+            {
+                CompileToFile(path, FileFormat.S28, Encoding.ASCII);
+            }
+
             public static void CompileToFile(string path, FileFormat format)
             {
                 CompileToFile(path, format, Encoding.ASCII);
