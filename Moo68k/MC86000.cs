@@ -23,6 +23,11 @@ using System.Threading.Tasks;
  *     Probably class.
  */
 
+/* set it with OR
+ * toggle with XOR
+ * unset with AND NOT
+ */
+
 namespace Moo68k
 {
     [Flags]
@@ -287,7 +292,7 @@ namespace Moo68k
         }
 
         /* In later models... (MC68040 and the MC68881/MC68882)
-        float FP0, FP1, FP2, FP3, FP4, FP5, FP6, FP7; // Floating-Point Data Registers (80 bits?)
+        float FP0, FP1, FP2, FP3, FP4, FP5, FP6, FP7; // Floating-Point Data Registers (80 bits)
         ushort FPCR; // Floating-Point Control Register (IEEE 754)
 
         uint FPSR; // Floating-Point Status Register <-+
@@ -309,7 +314,7 @@ namespace Moo68k
             dataRegisters = new uint[8];
             addressRegisters = new uint[8];
 
-            Memory = new MemoryModule(MEM_MAX);
+            Memory = new MemoryModule(0xFFFF); //MEM_MAX
 
             Reset();
         }
@@ -350,16 +355,16 @@ namespace Moo68k
             //TODO: Interpret(string)
         }
 
-        public void Execute(ushort op, uint arg = 0) // public for now..?
+        public void Execute(ushort opcode, uint operand = 0) // public for now..?
         {
             //TODO: Clean up (at some point)
 
             if (FlagTracingEnabled)
-                Trace.WriteLine($"{PC:X8}  {op:X4}  {arg:X8}");
+                Trace.WriteLine($"{PC:X8}  {opcode:X4}  {operand:X8}");
 
             //[0000]0000 0000 0000
             // Operation Code
-            int oc = (op >> 12) & 0xF;
+            int oc = (opcode >> 12) & 0xF;
 
             // Page 8-4, 8.2 OPERATION CODE MAP
             switch (oc)
@@ -377,22 +382,22 @@ namespace Moo68k
                 case 3: // Move word
                     {
                         // Size, Page 4-116
-                        int sz = (op >> 12) & 7; // 00[00]000 000 000 000
+                        int sz = (opcode >> 12) & 3; // 00[00]000 000 000 000
 
                         // Desition, Page 4-117
                         // Destination register
-                        int dr = (op >> 9) & 7; //  00 00[000]000 000 000
+                        int dr = (opcode >> 9) & 7; //  00 00[000]000 000 000
                         // Destination mode
-                        int dm = (op >> 6) & 7; //  00 00 000[000]000 000
+                        int dm = (opcode >> 6) & 7; //  00 00 000[000]000 000
                         
                         // Source, Page 4-118
                         // Source mode
-                        int sm = (op >> 3) & 7; //  00 00 000 000[000]000
+                        int sm = (opcode >> 3) & 7; //  00 00 000 000[000]000
                         // Source register
-                        int sr = op & 7; //         00 00 000 000 000[000]
+                        int sr = opcode & 7; //         00 00 000 000 000[000]
 
                         if (FlagTracingEnabled)
-                            Trace.WriteLine($"sz={sz} dr={dr:x2} dm={dm:x2} sm={sm:x2} sr={sr:x2}");
+                            Trace.WriteLine($"sz={sz} dr={dr} dm={dm} sm={sm} sr={sr}");
 
                         switch (sm) // Source Effective Address field
                         {
@@ -403,6 +408,9 @@ namespace Moo68k
 
                                     case 0: // 000 Dn
                                         dataRegisters[dr] = dataRegisters[sr];
+
+                                        FlagIsNegative = dataRegisters[sr] < 0; //..I doubt that will work.
+                                        FlagIsZero = dataRegisters[sr] == 0; // Also, is the source the data specified?
                                         break;
                                     case 2: // 010 (An)
 
@@ -486,6 +494,14 @@ namespace Moo68k
 
                                 break;
                         }
+
+                        if (dm != 2)
+                        {
+                            // X N Z V C
+                            // - * * 0 0
+                            FlagIsOverflow = false;
+                            FlagIsCarry = false;
+                        }
                     }
                     break;
 
@@ -493,18 +509,14 @@ namespace Moo68k
                 case 4:
                     {
                         // Some hardcoded opcodes
-                        switch (op)
+                        switch (opcode)
                         {
                             case 0x4AFC: //TODO: ILLEGAL
                                 break;
                             case 0x4E70: // RESET
-                                //TODO: RESET IF Supervisor State
-                                /*
-                                If Supervisor State
-                                    Then Assert RESET (RSTO, MC68040 Only) Line
-                                Else TRAP
-                                */
-                                Reset();
+                                if (FlagIsSupervisor)
+                                    Reset();
+                                //TODO: TRAP
                                 return;
                             case 0x4E71: // NOP
                                 return;

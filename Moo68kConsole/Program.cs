@@ -18,6 +18,7 @@ namespace Emuumuu
             MC86000 m68k = new MC86000();
 
             WriteLine("Enabling tracing...");
+            m68k.FlagIsSupervisor = true;
             m68k.FlagTracingEnabled = true;
 
             WriteLine("Running random stuff...");
