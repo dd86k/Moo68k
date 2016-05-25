@@ -28,7 +28,7 @@ namespace Moo68k
     [Flags]
     public enum CCRFlags : byte
     {
-        C = 1, V = 2, Z = 4, N = 8, X = 16
+        C = 1, V = 2, Z = 4, N = 8, X = 16 // Am I even going to use these?
     }
 
     [Flags]
@@ -46,7 +46,7 @@ namespace Moo68k
     }*/
 
     /// <summary>
-    /// Represents a Motorola 68000 microprocessor
+    /// Represents a Motorola 68000 microprocessor.
     /// </summary>
     /// <remarks>
     /// Generation: First
@@ -62,8 +62,11 @@ namespace Moo68k
         // Constants ⁄(⁄ ⁄•⁄ω⁄•⁄ ⁄)⁄
 
         const ushort SR_INIT = 0x2700;
+        const int MEM_MAX = 0xFFFFFF; // 0x00FFFFFF, ‭16777215‬, 16 MB
 
         // Properties ヽ(•̀ω•́ )ゝ
+
+        /* Data registers */
 
         public uint D0
         {
@@ -106,66 +109,44 @@ namespace Moo68k
             private set { dataRegisters[7] = value; }
         }
         uint[] dataRegisters;
+        
+        /* Address registers */
 
-        /// <summary>
-        /// Address register A0
-        /// </summary>
         public uint A0
         {
             get { return addressRegisters[0]; }
             private set { addressRegisters[0] = value; }
         }
-        /// <summary>
-        /// Address register A1
-        /// </summary>
         public uint A1
         {
             get { return addressRegisters[1]; }
             private set { addressRegisters[1] = value; }
         }
-        /// <summary>
-        /// Address register A2
-        /// </summary>
         public uint A2
         {
             get { return addressRegisters[2]; }
             private set { addressRegisters[2] = value; }
         }
-        /// <summary>
-        /// Address register A3
-        /// </summary>
         public uint A3
         {
             get { return addressRegisters[3]; }
             private set { addressRegisters[3] = value; }
         }
-        /// <summary>
-        /// Address register A4
-        /// </summary>
         public uint A4
         {
             get { return addressRegisters[4]; }
             private set { addressRegisters[4] = value; }
         }
-        /// <summary>
-        /// Address register A5
-        /// </summary>
         public uint A5
         {
             get { return addressRegisters[5]; }
             private set { addressRegisters[5] = value; }
         }
-        /// <summary>
-        /// Address register A6
-        /// </summary>
         public uint A6
         {
             get { return addressRegisters[6]; }
             private set { addressRegisters[6] = value; }
         }
-        /// <summary>
-        /// Address register A7
-        /// </summary>
         public uint A7
         {
             get { return addressRegisters[7]; }
@@ -178,7 +159,7 @@ namespace Moo68k
         /// </summary>
         public uint USP { get; private set; }
         /// <summary>
-        /// System Stack Pointer (A7")
+        /// System Stack Pointer (A7") (ISP and/or MSP?)
         /// </summary>
         public uint SSP { get; private set; }
         /// <summary>
@@ -187,51 +168,138 @@ namespace Moo68k
         public uint PC { get; private set; }
 
         /// <summary>
-        /// Condition Code Register
-        /// </summary>
-        public byte CCR { get { return (byte)(SR & 0x1F); } }
-
-        /// <summary>
-        /// Status Register
+        /// Status Register.
         /// </summary>
         /// <remarks>
+        /// Page 1-11, 1.3.2
         /// 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
-        ///  T     S  M  0     I     0  0  0  X  N  Z  V  C
+        /// T1 T0  S  M  0 I2 I1 I0  0  0  0  X  N  Z  V  C
         ///  0  0  1  0  0  1  1  1  0  0  0  0  0  0  0  0 - Reset (0x2700)
-        ///                         User mode |-----------|
+        /// |------------------------|--------------------|
+        ///        System byte           User byte (CCR)
+        /// --
+        /// T1, T0 - TRACE MODE
+        ///  0   0 - NO TRACE
+        ///  1   0 - TRACE ON ANY INSTRUCTION
+        ///  0   1 - TRACE ON CHANGE OF FLOW
+        ///  1   1 - UNDEFINED
+        /// NOTE: MC68000, MC68EC000, MC68008, MC68010, MC68HC000, MC68HC001, and CPU32
+        ///       Only one trace mode supported, where the T0-bit is always zero, and
+        ///       only one system stack where the M-bit is always zero.
+        /// --
+        /// S - Supervisor mode
+        /// M - Master/Interupt state
+        /// S, M - ACTIVE STACK
+        /// 0, x - USP (x being 0 or 1)
+        /// 1, 0 - ISP
+        /// 1, 1 - MSP
+        /// --
+        /// I1, I2, I3 - Interrupt mask level.
         /// </remarks>
         public ushort SR { get; private set; }
-        public bool TracingEnabled
+        /// <summary>
+        /// Condition Code Register byte.
+        /// </summary>
+        public byte CCR { get { return (byte)(SR & 0xFF); } }
+        /* System byte */
+        public bool FlagTracingEnabled
         {
             get { return (SR & 0x8000) != 0; }
             set
             {
+                //TODO: Tracing is only with supervisor powers!
+
+                //SR = value ? (ushort)(SR | 0x8000) : (ushort)(SR & ~0x8000); could be cool
+
                 if (value)
                     SR |= 0x8000;
                 else
                     SR = (ushort)(SR & ~0x8000);
             }
         }
-        
+        public bool FlagIsSupervisor
+        {
+            get { return (SR & 0x2000) != 0; }
+            set
+            {
+                if (value)
+                    SR |= 0x2000;
+                else
+                    SR = (ushort)(SR & ~0x2000);
+            }
+        }
+        //TODO: Interrupt mask level property
+        /* User byte */
+        public bool FlagIsExtend
+        {
+            get { return (SR & 0x10) != 0; }
+            private set
+            {
+                if (value)
+                    SR |= 0x10;
+                else
+                    SR = (ushort)(SR & ~0x10);
+            }
+        }
+        public bool FlagIsNegative
+        {
+            get { return (SR & 0x8) != 0; }
+            private set
+            {
+                if (value)
+                    SR |= 0x8;
+                else
+                    SR = (ushort)(SR & ~0x8);
+            }
+        }
+        public bool FlagIsZero
+        {
+            get { return (SR & 0x4) != 0; }
+            private set
+            {
+                if (value)
+                    SR |= 0x4;
+                else
+                    SR = (ushort)(SR & ~0x4);
+            }
+        }
+        public bool FlagIsOverflow
+        {
+            get { return (SR & 0x2) != 0; }
+            private set
+            {
+                if (value)
+                    SR |= 0x2;
+                else
+                    SR = (ushort)(SR & ~0x2);
+            }
+        }
+        public bool FlagIsCarry
+        {
+            get { return (SR & 0x1) != 0; }
+            private set
+            {
+                if (value)
+                    SR |= 0x1;
+                else
+                    SR = (ushort)(SR & ~0x1);
+            }
+        }
+
         /* In later models... (MC68040 and the MC68881/MC68882)
         float FP0, FP1, FP2, FP3, FP4, FP5, FP6, FP7; // Floating-Point Data Registers (80 bits?)
         ushort FPCR; // Floating-Point Control Register (IEEE 754)
 
-        uint FPSR; // Floating-Point Status Register
-        //byte FPCC; // FPSR Condition Code Byte
-        //byte QB;   // FPSR Quotient byte
-        //byte EXC;  // FPSR Exception Status Byte
-        //byte AEXC; // FPSR Accrued Exception Byte
+        uint FPSR; // Floating-Point Status Register <-+
+                                                       |
+        //byte FPCC; // FPSR Condition Code Byte   ----+
+        //byte QB;   // FPSR Quotient byte   ----------+
+        //byte EXC;  // FPSR Exception Status Byte   --+
+        //byte AEXC; // FPSR Accrued Exception Byte   -+
 
         uint FPIAR; // Floating-Point Instruction Address Register
         */
-
-        const byte BYTE_MAX = byte.MaxValue;
-        const ushort WORD_MAX = ushort.MaxValue;
-        const uint LONG_MAX = uint.MaxValue;
-
-        const uint MEM_MAX = 0xFFFFFF; // 0x00FFFFFF, ‭16777215‬, 16 MB
-
+        
         public MemoryModule Memory;
 
         // Constructors ✧(≖ ◡ ≖✿)
@@ -241,9 +309,7 @@ namespace Moo68k
             dataRegisters = new uint[8];
             addressRegisters = new uint[8];
 
-            Memory = new MemoryModule();
-
-            Memory.Bank = new byte[MEM_MAX];
+            Memory = new MemoryModule(MEM_MAX);
 
             Reset();
         }
@@ -275,6 +341,10 @@ namespace Moo68k
             //TODO: Insert(ushort)
         }
 
+        /// <summary>
+        /// Compile instructions and execute.
+        /// </summary>
+        /// <param name="input">Assembly.</param>
         public void Interpret(string input)
         {
             //TODO: Interpret(string)
@@ -284,14 +354,12 @@ namespace Moo68k
         {
             //TODO: Clean up (at some point)
 
-            if (TracingEnabled)
+            if (FlagTracingEnabled)
                 Trace.WriteLine($"{PC:X8}  {op:X4}  {arg:X8}");
 
-            // Grouping: 0000 0000 0000 0000
-            //           |--|
-            //            oc
+            //[0000]0000 0000 0000
             // Operation Code
-            int oc = (op & 0xF000) >> 12;
+            int oc = (op >> 12) & 0xF;
 
             // Page 8-4, 8.2 OPERATION CODE MAP
             switch (oc)
@@ -309,32 +377,32 @@ namespace Moo68k
                 case 3: // Move word
                     {
                         // Size, Page 4-116
-                        int sz = (op & 0x3000) >> 12; // 00[00]000 000 000 000
+                        int sz = (op >> 12) & 7; // 00[00]000 000 000 000
 
                         // Desition, Page 4-117
-                        // Destination register          00 00[000]000 000 000
-                        int dr = (op & 0xE00) >> 9;
-                        // Destination mode              00 00 000[000]000 000
-                        int dm = (op & 0x1C0) >> 6;
+                        // Destination register
+                        int dr = (op >> 9) & 7; //  00 00[000]000 000 000
+                        // Destination mode
+                        int dm = (op >> 6) & 7; //  00 00 000[000]000 000
                         
                         // Source, Page 4-118
-                        // Source mode                   00 00 000 000[000]000
-                        int sm = (op & 0x38) >> 3;
-                        // Source register               00 00 000 000 000[000]
-                        int sr = op & 7;
+                        // Source mode
+                        int sm = (op >> 3) & 7; //  00 00 000 000[000]000
+                        // Source register
+                        int sr = op & 7; //         00 00 000 000 000[000]
 
-                        if (TracingEnabled)
-                            Trace.WriteLine($"sz={sz:x2} dr={dr:x2} dm={dm:x2} sm={sm:x2} sr={sr:x2}");
+                        if (FlagTracingEnabled)
+                            Trace.WriteLine($"sz={sz} dr={dr:x2} dm={dm:x2} sm={sm:x2} sr={sr:x2}");
 
                         switch (sm) // Source Effective Address field
                         {
                             case 0: // 000 Dn
-                                switch (dm) // Destination mode
+                                switch (dm) // Destination Effective Address field
                                 {
                                     // Where to put An/#<DATA>/(d16,PC)/(d8,PC,Xn)? Probably ILLEGAL (default)
 
-                                    case 0: // 000 Dn -- Data register
-
+                                    case 0: // 000 Dn
+                                        dataRegisters[dr] = dataRegisters[sr];
                                         break;
                                     case 2: // 010 (An)
 
@@ -364,8 +432,40 @@ namespace Moo68k
                                         break;
                                 }
                                 break;
-                            case 1: // 001 An
 
+                            case 1: // 001 An
+                                switch (dm)
+                                {
+                                    case 0: // 000 Dn
+                                        dataRegisters[dr] = addressRegisters[sr];
+                                        break;
+                                    case 2: // 010 (An)
+
+                                        break;
+                                    case 3: // 011 (An)+
+
+                                        break;
+                                    case 4: // 100 -(An)
+
+                                        break;
+                                    case 5: // 101 (d16, An)
+
+                                        break;
+                                    case 6: // 110 (d8, An, Xn) 
+
+                                        break;
+                                    case 7: // 111
+                                        switch (dr)
+                                        {
+                                            case 0: // Word
+
+                                                break;
+                                            case 1: // Long
+
+                                                break;
+                                        }
+                                        break;
+                                }
                                 break;
                             case 2: // 010 (An)
 
@@ -563,11 +663,14 @@ namespace Moo68k
 
     public class MemoryModule // static class for now
     {
-        public MemoryModule() { }
+        public MemoryModule(int capacity) { Bank = new byte[capacity]; } // Make the array here (With argument)?
 
         public readonly bool IsLE = BitConverter.IsLittleEndian;
 
-        public byte[] Bank { get; set; }
+        /// <summary>
+        /// Memory bank, which enables you to do some memory mapping!
+        /// </summary>
+        public byte[] Bank { get; set; } // Maybe do private set?
 
         public uint ReadULong(int address)
         {

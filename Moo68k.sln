@@ -9,6 +9,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moo68kUnitTest", "Moo68kUni
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moo68kConsole", "Moo68kConsole\Moo68kConsole.csproj", "{C19B1D62-940C-4D38-B5D9-1767244DE468}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5EB2749C-261D-4EF1-9882-1D46E68422E1}"
+	ProjectSection(SolutionItems) = preProject
+		License = License
+		Readme.md = Readme.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
