@@ -13,8 +13,6 @@ using System.Threading.Tasks;
  *     Class -- Let's not overflow the stack, okay? Poor thing.
  * Incorporate FPCC, QB, EXC, AEXC into FPSR?
  *     Yes and no -- Those bytes are into FPSR, but we can do getters.
- * Use unsafe code?
- *     Probably later when this will work. (in 4 years of my lazy time)
  * Where to increase Program Counter?
  *     
  * Decide what to make as public property.
@@ -25,8 +23,7 @@ using System.Threading.Tasks;
 
 /* set it with OR
  * toggle with XOR
- * unset with AND NOT
- */
+ * unset with AND NOT */
 
 namespace Moo68k
 {
@@ -446,6 +443,9 @@ namespace Moo68k
                                 {
                                     case 0: // 000 Dn
                                         dataRegisters[dr] = addressRegisters[sr];
+
+                                        FlagIsNegative = dataRegisters[sr] < 0;
+                                        FlagIsZero = dataRegisters[sr] == 0;
                                         break;
                                     case 2: // 010 (An)
 
@@ -508,7 +508,7 @@ namespace Moo68k
                 // 0100 - Miscellaneous
                 case 4:
                     {
-                        // Some hardcoded opcodes
+                        // Some constant opcodes
                         switch (opcode)
                         {
                             case 0x4AFC: //TODO: ILLEGAL
@@ -516,7 +516,7 @@ namespace Moo68k
                             case 0x4E70: // RESET
                                 if (FlagIsSupervisor)
                                     Reset();
-                                //TODO: TRAP
+                                //TODO: else TRAP
                                 return;
                             case 0x4E71: // NOP
                                 return;
@@ -623,13 +623,6 @@ namespace Moo68k
                     break;
             }
         }
-
-        // Instructions ლ(•̀ _ •́ ლ)
-
-        public void JMP(uint address)
-        {
-            PC = address;
-        }
     }
 
     /// <summary>
@@ -647,17 +640,24 @@ namespace Moo68k
 
         static class SRecord
         {
-            public static void CompileToFile(string path)
+            public static string Compile(ref byte[] Memory, string path)
             {
-                CompileToFile(path, FileFormat.S28, Encoding.ASCII);
+                //TODO: Compile(string)
+
+                return "";
             }
 
-            public static void CompileToFile(string path, FileFormat format)
+            public static void CompileToFile(ref byte[] memory, string path)
             {
-                CompileToFile(path, format, Encoding.ASCII);
+                CompileToFile(ref memory, path, FileFormat.S28, Encoding.ASCII);
             }
 
-            public static void CompileToFile(string path, FileFormat format, Encoding encoding, bool capitalized = true)
+            public static void CompileToFile(ref byte[] memory, string path, FileFormat format)
+            {
+                CompileToFile(ref memory, path, format, Encoding.ASCII);
+            }
+
+            public static void CompileToFile(ref byte[] memory, string path, FileFormat format, Encoding encoding, bool capitalized = true)
             {
                 //TODO: CompileToFile(string)
 
@@ -673,29 +673,98 @@ namespace Moo68k
 
     }
 
+    /// <summary>
+    /// Represents a memory module.
+    /// </summary>
+    /// <remarks>
+    /// Not to worry about endianness! BitConverter takes care of that for us.
+    /// Also never stackalloc the memory.. it's supposed to be on the heap.
+    /// </remarks>
     public class MemoryModule // static class for now
     {
-        public MemoryModule(int capacity) { Bank = new byte[capacity]; } // Make the array here (With argument)?
+        public MemoryModule()
+        {
+            Bank = new byte[0xFFFF];
+        }
 
-        public readonly bool IsLE = BitConverter.IsLittleEndian;
+        public MemoryModule(int capacity)
+        {
+            Bank = new byte[capacity];
+        }
 
         /// <summary>
         /// Memory bank, which enables you to do some memory mapping!
         /// </summary>
         public byte[] Bank { get; set; } // Maybe do private set?
 
-        public uint ReadULong(int address)
-        {
-            // Increase PC here?
+        // Byte
 
-            return BitConverter.ToUInt32(Bank, address);
+        public byte ReadByte(int address)
+        {
+            return Bank[address];
         }
+
+        public void WriteByte(int address, byte value)
+        {
+            Bank[address] = value;
+        }
+
+        // Word
+
+        public short ReadWord(int address)
+        {
+            return BitConverter.ToInt16(Bank, address);
+        }
+
+        public void WriteWord(int address, short value)
+        {
+            Write(address, BitConverter.GetBytes(value));
+        }
+
+        // Unsigned word
+
+        public ushort ReadUWord(int address)
+        {
+            return BitConverter.ToUInt16(Bank, address);
+        }
+
+        public void WriteUWord(int address, ushort value)
+        {
+            Write(address, BitConverter.GetBytes(value));
+        }
+
+        // Long
 
         public int ReadLong(int address)
         {
-
-
             return BitConverter.ToInt32(Bank, address);
+        }
+
+        public void WriteLong(int address, int value)
+        {
+            Write(address, BitConverter.GetBytes(value));
+        }
+
+        // Unsigned long
+
+        public uint ReadULong(int address)
+        {
+            return BitConverter.ToUInt32(Bank, address);
+        }
+
+        public void WriteULong(int address, uint value)
+        {
+            Write(address, BitConverter.GetBytes(value));
+        }
+
+        // Misc.
+
+        void Write(int address, byte[] values)
+        {
+            for (int i = 0; i < values.Length; ++i)
+            {
+                Bank[address + i] = values[i];
+            }
         }
     }
 }
