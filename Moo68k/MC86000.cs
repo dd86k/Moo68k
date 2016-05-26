@@ -161,7 +161,7 @@ namespace Moo68k
         /// </summary>
         public uint USP { get; private set; }
         /// <summary>
-        /// System Stack Pointer (A7") (ISP and/or MSP?)
+        /// System Stack Pointer (A7") (MSP?)
         /// </summary>
         public uint SSP { get; private set; }
         /// <summary>
@@ -177,8 +177,8 @@ namespace Moo68k
         /// 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
         /// T1 T0  S  M  0 I2 I1 I0  0  0  0  X  N  Z  V  C
         ///  0  0  1  0  0  1  1  1  0  0  0  0  0  0  0  0 - Reset (0x2700)
-        /// |------------------------|--------------------|
-        ///        System byte           User byte (CCR)
+        /// |---------------------|-----------------------|
+        ///       System byte          User byte (CCR)
         /// --
         /// T1, T0 - TRACE MODE
         ///  0   0 - NO TRACE
@@ -186,14 +186,14 @@ namespace Moo68k
         ///  0   1 - TRACE ON CHANGE OF FLOW
         ///  1   1 - UNDEFINED
         /// NOTE: MC68000, MC68EC000, MC68008, MC68010, MC68HC000, MC68HC001, and CPU32
-        ///       Only one trace mode supported, where the T0-bit is always zero, and
+        ///       only has one trace mode supported, where the T0-bit is always zero, and
         ///       only one system stack where the M-bit is always zero.
         /// --
         /// S - Supervisor mode
         /// M - Master/Interupt state
         /// S, M - ACTIVE STACK
         /// 0, x - USP (x being 0 or 1)
-        /// 1, 0 - ISP
+        /// 1, 0 - ISP Read note
         /// 1, 1 - MSP
         /// --
         /// I1, I2, I3 - Interrupt mask level.
@@ -308,6 +308,8 @@ namespace Moo68k
 
         public MC86000()
         {
+            Trace.AutoFlush = true;
+
             dataRegisters = new uint[8];
             addressRegisters = new uint[8];
 
@@ -344,7 +346,7 @@ namespace Moo68k
         }
 
         /// <summary>
-        /// Compile instructions and execute.
+        /// Compile mnemonic instructions and execute.
         /// </summary>
         /// <param name="input">Assembly.</param>
         public void Interpret(string input)
@@ -352,28 +354,38 @@ namespace Moo68k
             //TODO: Interpret(string)
         }
 
-        public void Execute(ushort opcode, uint operand = 0) // public for now..?
+        /// <summary>
+        /// Compile a S-Record line and execute.
+        /// </summary>
+        /// <param name="input">S-Record line.</param>
+        public void InterpretSRecord(string input)
+        {
+            //TODO: InterpretSRecord(string)
+        }
+
+        public void Execute(ushort opcode, uint operand = 0)
         {
             //TODO: Clean up (at some point)
 
             if (FlagTracingEnabled)
                 Trace.WriteLine($"{PC:X8}  {opcode:X4}  {operand:X8}");
 
-            //[0000]0000 0000 0000
+            // [0000]0000 0000 0000
             // Operation Code
             int oc = (opcode >> 12) & 0xF;
 
             // Page 8-4, 8.2 OPERATION CODE MAP
             switch (oc)
             {
-                // 0000 - Bit manipulation
+                #region 0000 - Bit manipulation
                 case 0:
                     {
 
                     }
                     break;
+                #endregion
 
-                // 0001~0011
+                #region 0001~0011 - Move
                 case 1: // Move byte
                 case 2: // Move long
                 case 3: // Move word
@@ -394,15 +406,16 @@ namespace Moo68k
                         int sr = opcode & 7; //         00 00 000 000 000[000]
 
                         if (FlagTracingEnabled)
-                            Trace.WriteLine($"sz={sz} dr={dr} dm={dm} sm={sm} sr={sr}");
-
+                            Trace.WriteLine($"MOVE sz={sz} dr={dr} dm={dm} sm={sm} sr={sr}");
+                        
+                        //TODO: Re-structure
+                        // Structure: sm -> dm -> dr .. sr (for now)
+                        
                         switch (sm) // Source Effective Address field
                         {
                             case 0: // 000 Dn
                                 switch (dm) // Destination Effective Address field
                                 {
-                                    // Where to put An/#<DATA>/(d16,PC)/(d8,PC,Xn)? Probably ILLEGAL (default)
-
                                     case 0: // 000 Dn
                                         dataRegisters[dr] = dataRegisters[sr];
 
@@ -427,15 +440,27 @@ namespace Moo68k
                                     case 7: // 111
                                         switch (dr)
                                         {
-                                            case 0: // Word
+                                            case 0: // 000 Word
 
                                                 break;
-                                            case 1: // Long
+                                            case 1: // 001 Long
 
+                                                break;
+                                            case 2: // 010 (d16, PC)
+
+                                                break;
+                                            case 3: // 011 (d8, PC, Xn) 
+
+                                                break;
+                                            case 4: // 100 #<data>
+                                                dataRegisters[dr] = operand;
+
+                                                FlagIsNegative = operand < 0;
+                                                FlagIsZero = operand == 0;
                                                 break;
                                         }
                                         break;
-                                }
+                                } // Destination Effective Address field
                                 break;
 
                             case 1: // 001 An
@@ -462,7 +487,7 @@ namespace Moo68k
                                     case 6: // 110 (d8, An, Xn) 
 
                                         break;
-                                    case 7: // 111
+                                    case 7: // 111 Immidiate
                                         switch (dr)
                                         {
                                             case 0: // Word
@@ -491,9 +516,34 @@ namespace Moo68k
 
                                 break;
                             case 7: // 111
+                                switch (dm) // Destination mode
+                                {
+                                    case 0: // 000 Dn
+                                        switch (sr)
+                                        {
+                                            case 0: // 000 (xxx).W
+                                            case 1: // 001 (xxx).L
+                                                if (sz > 1)
+                                                    dataRegisters[dr] = operand;
+                                                //TODO: else what if size is byte (01)
+                                                break;
+                                            case 2: // 010 (d16, PC)
 
+                                                break;
+                                            case 3: // 011 (d8, PC, Xn)
+
+                                                break;
+                                            case 4: // 100 #<data>
+                                                dataRegisters[dr] = operand;
+                                                break;
+                                        }
+                                        break;
+                                    case 2: // 010 (An)
+
+                                        break;
+                                }
                                 break;
-                        }
+                        } // Source Effective Address field
 
                         if (dm != 2)
                         {
@@ -504,8 +554,9 @@ namespace Moo68k
                         }
                     }
                     break;
+                #endregion 0001~0011
 
-                // 0100 - Miscellaneous
+                #region 0100 - Miscellaneous
                 case 4:
                     {
                         // Some constant opcodes
@@ -518,7 +569,8 @@ namespace Moo68k
                                     Reset();
                                 //TODO: else TRAP
                                 return;
-                            case 0x4E71: // NOP
+                            case 0x4E71: // NOP Page 4-147
+                                PC += 16;
                                 return;
                             case 0x4E72: //TODO: STOP
 
@@ -529,9 +581,15 @@ namespace Moo68k
                             case 0x4E75: //TODO: RTS
 
                                 break;
-                            case 0x4E76: //TODO: TRAPV
+                            case 0x4E76: // TRAPV Page 4-191
+                                if (FlagIsOverflow)
+                                {
+                                    //TODO: TRAPV exception with a vector number 7
+                                    // See Page B-2, table B-1
 
-                                break;
+                                    
+                                } // Or else do nothing
+                                return;
                             case 0x4E77: //TODO: RTR
 
                                 break;
@@ -544,84 +602,116 @@ namespace Moo68k
                         }
                     }
                     break;
+                #endregion
 
-                // 0101 - ADDQ/SUBQ/Scc/DBcc/TRAPc c
+                #region 0101 - ADDQ/SUBQ/Scc/DBcc/TRAPc c
                 case 5:
                     {
 
                     }
                     break;
+                #endregion
 
-                // 0110 - Bcc/BSR/BRA
+                #region 0110 - Bcc/BSR/BRA
                 case 6:
                     {
 
                     }
                     break;
+                #endregion
 
-                // 0111 - MOVEQ
+                #region 0111 - MOVEQ
                 case 7:
                     {
 
                     }
                     break;
+                #endregion
 
-                // 1000 - OR/DIV/SBCD
+                #region 1000 - OR/DIV/SBCD
                 case 8:
                     {
 
                     }
                     break;
+                #endregion
 
-                // 1001 - SUB/SUBX
+                #region 1001 - SUB/SUBX
                 case 9:
                     {
 
                     }
                     break;
+                #endregion
 
-                // 1010 - Unassigned, Reserved
+                #region 1010 - Unassigned, Reserved
                 case 10:
                     {
 
                     }
                     break;
+                #endregion
 
-                // 1011 - CMP/EOR
+                #region 1011 - CMP/EOR
                 case 11:
                     {
 
                     }
                     break;
+                #endregion
 
-                // 1100 - AND/MUL/ABCD/EXG
+                #region 1100 - AND/MUL/ABCD/EXG
                 case 12:
                     {
 
                     }
                     break;
+                #endregion
 
-                // 1101 - ADD/ADDX
+                #region 1101 - ADD/ADDX
                 case 13:
                     {
 
                     }
                     break;
+                #endregion
 
-                // 1110 - Shift/Rotate/Bit Field
+                #region 1110 - Shift/Rotate/Bit Field
                 case 14:
                     {
 
                     }
                     break;
+                #endregion
 
-                // 1111 - Coprocessor Interface/MC68040 and CPU32 Extensions
+                #region 1111 - Coprocessor Interface/MC68040 and CPU32 Extensions
+                /* Does the MC86000 even use this? I doubt. */
                 case 15:
                     {
-
+                        
                     }
                     break;
+                #endregion
             }
+        }
+
+        /// <summary>
+        /// Causes a TRAP # < vector > exception.
+        /// </summary>
+        /// <param name="vector">Vector ranging from 0 to 255.</param>
+        /// <remarks>
+        /// The MC68000 and MC68008 do not write vector offset or format code to the system stack.
+        /// </remarks>
+        public void TRAP(byte vector) // Page 4-188
+        {
+            //TODO: TRAP(byte);
+            /*
+             Operation:
+                1 → S-Bit of SR
+                *SSP – 2 → SSP; Format/Offset → (SSP); (see <remarks>)
+                SSP – 4 → SSP; PC → (SSP); SSP – 2 → SSP;
+                SR → (SSP); Vector Address → PC
+             */
         }
     }
 
@@ -644,7 +734,7 @@ namespace Moo68k
             {
                 //TODO: Compile(string)
 
-                return "";
+                throw new NotImplementedException();
             }
 
             public static void CompileToFile(ref byte[] memory, string path)
@@ -660,6 +750,8 @@ namespace Moo68k
             public static void CompileToFile(ref byte[] memory, string path, FileFormat format, Encoding encoding, bool capitalized = true)
             {
                 //TODO: CompileToFile(string)
+
+                throw new NotImplementedException();
 
                 using (StreamWriter sw = new StreamWriter(path, false, encoding))
                 {
@@ -695,7 +787,9 @@ namespace Moo68k
         /// <summary>
         /// Memory bank, which enables you to do some memory mapping!
         /// </summary>
-        public byte[] Bank { get; set; } // Maybe do private set?
+        //TODO: Consider using a Dictionary<int, byte>(capacity); <address, data>
+        //   .. Even though writing and reading times may be slower
+        public byte[] Bank { get; private set; }
 
         // Byte
 
