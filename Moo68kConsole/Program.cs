@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Moo68k;
+using System;
 using static System.Console;
-using System.Timers;
-using Moo68k;
 
-namespace Emuumuu
+namespace Moo86kConsole
 {
     class Program
     {
@@ -30,25 +24,35 @@ namespace Emuumuu
             m68k.Execute(0x1A3C, 5);
             WriteLine($"1A3C 00000005 -> D5={m68k.D5:X8}"); // move.b #5,d5
 
-            // Those instructions is from a manual from 
+            // Those two instructions is from a manual (mbsd_l2.pdf) from
+            // Ricardo Gutierrez-Osuna, Wright State University
+            
             // MOVE.L #$12,d0 | 00 10 000 000 111 100 | 203C 00000012
+            // self note: puts 0x12 into register d0
             m68k.Execute(0x203C, 0x12);
-            WriteLine($"203C 00000012 -> D0={m68k.D0:X8}"); // MOVE.L #$12,d0
+            WriteLine($"203C 00000012 -> D0={m68k.D0:X8}");
 
+            // MOVE.B data,d1 | 00 01 001 000 111 001 | 1239 00002000
+            // self note: This goes at the address 2000 stored in data (a variable?) and
+            //            loads "24" into d1
+            //            Is this due to a higher language?
+            m68k.Execute(0x1239, 0x2000);
+            WriteLine($"1239 00002000 -> D1={m68k.D1:X8}");
+            
             WriteLine();
             WriteLine("Press RETURN to start random test.");
             ReadLine();
 
             WriteLine("Running random stuff...");
             Random r = new Random();
-            int max = ushort.MaxValue;
             while (true)
             {
                 System.Threading.Thread.Sleep(500);
 
-                ushort op = (ushort)r.Next(max);
+                ushort op = (ushort)r.Next(ushort.MaxValue);
+                uint opr = (uint)r.Next(int.MaxValue);
 
-                m68k.Execute(op, 0x69);
+                m68k.Execute(op, opr);
 
                 Clear();
 
@@ -58,7 +62,7 @@ namespace Emuumuu
                 WriteLine($" A4={m68k.A4:X4}  A5={m68k.A5:X4}  A6={m68k.A6:X4}  A7={m68k.A7:X4}");
                 WriteLine($"SSP={m68k.SSP:X8}  USP={m68k.USP:X8}  SR={m68k.SR:X4}");
                 WriteLine();
-                WriteLine($"{m68k.PC:X8}  {op:X4}");
+                WriteLine($"{m68k.PC:X8}  {op:X4}  {opr:X8}");
             }
         }
     }

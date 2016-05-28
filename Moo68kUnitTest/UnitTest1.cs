@@ -1,15 +1,15 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace EmuumuuUnitTest
+namespace Moo86kUnitTest
 {
     [TestClass]
-    public class UnitTest1
+    public class Moo86kUnitTest
     {
         [TestMethod]
-        public void TestMethod1()
+        public void DataRegisters()
         {
-
+            Assert.AreEqual("hi", "hi");
         }
     }
 }

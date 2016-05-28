@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 /* Design TODOs
  * 
@@ -161,7 +157,7 @@ namespace Moo68k
         /// </summary>
         public uint USP { get; private set; }
         /// <summary>
-        /// System Stack Pointer (A7") (MSP?)
+        /// System Stack Pointer (A7") (MSP? SP?)
         /// </summary>
         public uint SSP { get; private set; }
         /// <summary>
@@ -177,7 +173,7 @@ namespace Moo68k
         /// 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
         /// T1 T0  S  M  0 I2 I1 I0  0  0  0  X  N  Z  V  C
         ///  0  0  1  0  0  1  1  1  0  0  0  0  0  0  0  0 - Reset (0x2700)
-        /// |---------------------|-----------------------|
+        /// |----------------------||---------------------|
         ///       System byte          User byte (CCR)
         /// --
         /// T1, T0 - TRACE MODE
@@ -348,7 +344,7 @@ namespace Moo68k
         /// <summary>
         /// Compile mnemonic instructions and execute.
         /// </summary>
-        /// <param name="input">Assembly.</param>
+        /// <param name="input">Mnemonic instructions.</param>
         public void Interpret(string input)
         {
             //TODO: Interpret(string)
@@ -363,6 +359,11 @@ namespace Moo68k
             //TODO: InterpretSRecord(string)
         }
 
+        /// <summary>
+        /// Execute an operation code with an optional operand.
+        /// </summary>
+        /// <param name="opcode">Operation code.</param>
+        /// <param name="operand">Operand.</param>
         public void Execute(ushort opcode, uint operand = 0)
         {
             //TODO: Clean up (at some point)
@@ -384,7 +385,7 @@ namespace Moo68k
                     }
                     break;
                 #endregion
-
+                
                 #region 0001~0011 - Move
                 case 1: // Move byte
                 case 2: // Move long
@@ -555,7 +556,7 @@ namespace Moo68k
                     }
                     break;
                 #endregion 0001~0011
-
+                
                 #region 0100 - Miscellaneous
                 case 4:
                     {
@@ -563,6 +564,15 @@ namespace Moo68k
                         switch (opcode)
                         {
                             case 0x4AFC: //TODO: ILLEGAL
+                                /* Operation:
+                                *SSP – 2 → SSP; Vector Offset → (SSP);
+                                SSP – 4 → SSP; PC → (SSP);
+                                SSP – 2 → SSP; SR → (SSP);
+                                Illegal Instruction Vector Address → PC
+
+                                *The MC68000 and MC68008 cannot write the vector offset and format code to the system stack.*/
+
+
                                 break;
                             case 0x4E70: // RESET
                                 if (FlagIsSupervisor)
@@ -570,7 +580,7 @@ namespace Moo68k
                                 //TODO: else TRAP
                                 return;
                             case 0x4E71: // NOP Page 4-147
-                                PC += 16;
+                                PC += 16; // or stack pointer?!
                                 return;
                             case 0x4E72: //TODO: STOP
 
@@ -587,7 +597,7 @@ namespace Moo68k
                                     //TODO: TRAPV exception with a vector number 7
                                     // See Page B-2, table B-1
 
-                                    
+                                    TRAP(7);
                                 } // Or else do nothing
                                 return;
                             case 0x4E77: //TODO: RTR
@@ -603,7 +613,7 @@ namespace Moo68k
                     }
                     break;
                 #endregion
-
+                
                 #region 0101 - ADDQ/SUBQ/Scc/DBcc/TRAPc c
                 case 5:
                     {
@@ -611,7 +621,7 @@ namespace Moo68k
                     }
                     break;
                 #endregion
-
+                
                 #region 0110 - Bcc/BSR/BRA
                 case 6:
                     {
@@ -619,15 +629,25 @@ namespace Moo68k
                     }
                     break;
                 #endregion
-
+                
                 #region 0111 - MOVEQ
                 case 7:
                     {
+                        // Page 4-134
+                        // Register 0111 [000]0 0000 0000
+                        // Data     0111 0000 [0000 0000]
+                        int data = opcode & 0xFF;
 
+                        dataRegisters[(opcode >> 9) & 7] = (uint)data;
+
+                        FlagIsNegative = data < 0;
+                        FlagIsZero = data == 0;
+                        FlagIsCarry = false;
+                        FlagIsOverflow = false;
                     }
                     break;
                 #endregion
-
+                
                 #region 1000 - OR/DIV/SBCD
                 case 8:
                     {
@@ -635,15 +655,79 @@ namespace Moo68k
                     }
                     break;
                 #endregion
-
+                
                 #region 1001 - SUB/SUBX
                 case 9:
                     {
+                        // Page 4-174
+                        // Register                   1001 [000] 000 000 000
+                        int reg = (opcode >> 9) & 7;
 
+                        // Opmode                     1001 000 [000] 000 000
+                        int mode = (opcode >> 6) & 7;
+                        
+                        // Effective Address Mode     1001 000 000 [000] 000
+                        int eam = (opcode >> 3) & 7;
+
+                        // Effective Address Register 1001 000 000 000 [000]
+                        int ear = opcode & 7;
+
+                        switch (eam)
+                        {
+                            case 0: // 000 Dn
+
+                                break;
+                            case 1: // 001 An (For byte-sized operation, address register direct is not allowed.)
+
+                                break;
+                            case 2: // 010 (An)
+
+                                break;
+                            case 3: // 011 (An)+
+
+                                break;
+                            case 4: // 100 -(An)
+
+                                break;
+                            case 5: // 101 (d16, An)
+
+                                break;
+                            case 6: // 110 (d8, An, Xn)
+
+                                break;
+                            case 7:
+                                switch (ear)
+                                {
+                                    case 0: // 000 (xxx).W
+
+                                        break;
+                                    case 1: // 001 (xxx).L
+
+                                        break;
+                                    case 2: // 010 (d16, PC)
+
+                                        break;
+                                    case 3: // 011 (d8, PC, Xn)
+
+                                        break;
+                                    case 4: // 100 #<data>
+
+                                        break;
+                                }
+                                break;
+                        }
+
+                        /*
+                            X — Set to the value of the carry bit.
+                            N — Set if the result is negative; cleared otherwise.
+                            Z — Set if the result is zero; cleared otherwise.
+                            V — Set if an overflow is generated; cleared otherwise.
+                            C — Set if a borrow is generated; cleared otherwise.
+                        */
                     }
                     break;
                 #endregion
-
+                
                 #region 1010 - Unassigned, Reserved
                 case 10:
                     {
@@ -651,7 +735,7 @@ namespace Moo68k
                     }
                     break;
                 #endregion
-
+                
                 #region 1011 - CMP/EOR
                 case 11:
                     {
@@ -659,7 +743,7 @@ namespace Moo68k
                     }
                     break;
                 #endregion
-
+                
                 #region 1100 - AND/MUL/ABCD/EXG
                 case 12:
                     {
@@ -667,7 +751,7 @@ namespace Moo68k
                     }
                     break;
                 #endregion
-
+                
                 #region 1101 - ADD/ADDX
                 case 13:
                     {
@@ -675,7 +759,7 @@ namespace Moo68k
                     }
                     break;
                 #endregion
-
+                
                 #region 1110 - Shift/Rotate/Bit Field
                 case 14:
                     {
@@ -683,7 +767,7 @@ namespace Moo68k
                     }
                     break;
                 #endregion
-
+                
                 #region 1111 - Coprocessor Interface/MC68040 and CPU32 Extensions
                 /* Does the MC86000 even use this? I doubt. */
                 case 15:
@@ -696,7 +780,7 @@ namespace Moo68k
         }
 
         /// <summary>
-        /// Causes a TRAP # < vector > exception.
+        /// Causes a TRAP #<vector> exception.
         /// </summary>
         /// <param name="vector">Vector ranging from 0 to 255.</param>
         /// <remarks>
@@ -704,6 +788,8 @@ namespace Moo68k
         /// </remarks>
         public void TRAP(byte vector) // Page 4-188
         {
+            // consider publicness?!
+
             //TODO: TRAP(byte);
             /*
              Operation:
@@ -730,24 +816,24 @@ namespace Moo68k
 
         static class SRecord
         {
-            public static string Compile(ref byte[] Memory, string path)
+            public static string Compile(string source, string path)
             {
                 //TODO: Compile(string)
 
                 throw new NotImplementedException();
             }
 
-            public static void CompileToFile(ref byte[] memory, string path)
+            public static void CompileToFile(string source, string path)
             {
-                CompileToFile(ref memory, path, FileFormat.S28, Encoding.ASCII);
+                CompileToFile(source, path, FileFormat.S28, Encoding.ASCII);
             }
 
-            public static void CompileToFile(ref byte[] memory, string path, FileFormat format)
+            public static void CompileToFile(string source, string path, FileFormat format)
             {
-                CompileToFile(ref memory, path, format, Encoding.ASCII);
+                CompileToFile(source, path, format, Encoding.ASCII);
             }
 
-            public static void CompileToFile(ref byte[] memory, string path, FileFormat format, Encoding encoding, bool capitalized = true)
+            public static void CompileToFile(string source, string path, FileFormat format, Encoding encoding, bool capitalized = true)
             {
                 //TODO: CompileToFile(string)
 
