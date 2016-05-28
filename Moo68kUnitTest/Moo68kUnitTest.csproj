@@ -56,7 +56,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Moo68k\Moo68k.csproj">
       <Project>{14c11e14-fba6-43a0-ab47-37cc2006d018}</Project>
-      <Name>Emuumuu</Name>
+      <Name>Moo68k</Name>
     </ProjectReference>
   </ItemGroup>
   <Choose>
