@@ -302,14 +302,18 @@ namespace Moo68k
 
         // Constructors ✧(≖ ◡ ≖✿)
 
-        public MC86000()
+        /// <summary>
+        /// Constructs a new MC86000 with 64 KB of RAM.
+        /// </summary>
+        /// <param name="memorysize">Optional memory size in bytes.</param>
+        public MC86000(int memorysize = 0xFFFF)
         {
             Trace.AutoFlush = true;
 
             dataRegisters = new uint[8];
             addressRegisters = new uint[8];
 
-            Memory = new MemoryModule(0xFFFF); //MEM_MAX
+            Memory = new MemoryModule(memorysize);
 
             Reset();
         }
@@ -357,6 +361,15 @@ namespace Moo68k
         public void InterpretSRecord(string input)
         {
             //TODO: InterpretSRecord(string)
+        }
+
+        /// <summary>
+        /// Seperate the operation code from the operand and execute the opcode.
+        /// </summary>
+        /// <param name="instruction">Combined instruction.</param>
+        public void Execute(ulong instruction)
+        {
+            Execute((ushort)(instruction >> 32), (uint)(instruction & 0xFFFFFFFF));
         }
 
         /// <summary>
@@ -573,6 +586,7 @@ namespace Moo68k
                                 *The MC68000 and MC68008 cannot write the vector offset and format code to the system stack.*/
 
 
+
                                 break;
                             case 0x4E70: // RESET
                                 if (FlagIsSupervisor)
@@ -656,7 +670,7 @@ namespace Moo68k
                     break;
                 #endregion
                 
-                #region 1001 - SUB/SUBX
+                #region 1001 - SUB/SUBX/SUBA
                 case 9:
                     {
                         // Page 4-174
@@ -667,51 +681,113 @@ namespace Moo68k
                         int mode = (opcode >> 6) & 7;
                         
                         // Effective Address Mode     1001 000 000 [000] 000
-                        int eam = (opcode >> 3) & 7;
+                        int eamode = (opcode >> 3) & 7;
 
                         // Effective Address Register 1001 000 000 000 [000]
-                        int ear = opcode & 7;
+                        int eareg = opcode & 7;
 
-                        switch (eam)
+                        /*
+                            Opmode field
+                            Byte  Word  Long  Operation
+                            000   001   010   Dn – < ea > = Dn
+                            100   101   110   < ea > – Dn = < ea >
+                        */
+                        switch (mode)
                         {
-                            case 0: // 000 Dn
-
-                                break;
-                            case 1: // 001 An (For byte-sized operation, address register direct is not allowed.)
-
-                                break;
-                            case 2: // 010 (An)
-
-                                break;
-                            case 3: // 011 (An)+
-
-                                break;
-                            case 4: // 100 -(An)
-
-                                break;
-                            case 5: // 101 (d16, An)
-
-                                break;
-                            case 6: // 110 (d8, An, Xn)
-
-                                break;
-                            case 7:
-                                switch (ear)
+                            case 0: // tmp
+                            case 1:
+                            case 2:
+                                switch (eamode)
                                 {
-                                    case 0: // 000 (xxx).W
+                                    case 0: // 000 Dn
+                                        dataRegisters[eareg] -= operand;
+                                        break;
+                                    case 1: // 001 An (For byte-sized operation, address register direct is not allowed.)
 
                                         break;
-                                    case 1: // 001 (xxx).L
+                                    case 2: // 010 (An)
 
                                         break;
-                                    case 2: // 010 (d16, PC)
+                                    case 3: // 011 (An)+
 
                                         break;
-                                    case 3: // 011 (d8, PC, Xn)
+                                    case 4: // 100 -(An)
 
                                         break;
-                                    case 4: // 100 #<data>
+                                    case 5: // 101 (d16, An)
 
+                                        break;
+                                    case 6: // 110 (d8, An, Xn)
+
+                                        break;
+                                    case 7:
+                                        switch (eareg)
+                                        {
+                                            case 0: // 000 (xxx).W
+
+                                                break;
+                                            case 1: // 001 (xxx).L
+
+                                                break;
+                                            case 2: // 010 (d16, PC)
+
+                                                break;
+                                            case 3: // 011 (d8, PC, Xn)
+
+                                                break;
+                                            case 4: // 100 #<data>
+
+                                                break;
+                                        }
+                                        break;
+                                }
+                                break;
+
+                            case 4:
+                            case 5:
+                            case 6:
+                                switch (eamode)
+                                {
+                                    case 0: // 000 Dn
+
+                                        break;
+                                    case 1: // 001 An (For byte-sized operation, address register direct is not allowed.)
+
+                                        break;
+                                    case 2: // 010 (An)
+
+                                        break;
+                                    case 3: // 011 (An)+
+
+                                        break;
+                                    case 4: // 100 -(An)
+
+                                        break;
+                                    case 5: // 101 (d16, An)
+
+                                        break;
+                                    case 6: // 110 (d8, An, Xn)
+
+                                        break;
+                                    case 7:
+                                        switch (eareg)
+                                        {
+                                            case 0: // 000 (xxx).W
+
+                                                break;
+                                            case 1: // 001 (xxx).L
+
+                                                break;
+                                            case 2: // 010 (d16, PC)
+
+                                                break;
+                                            case 3: // 011 (d8, PC, Xn)
+
+                                                break;
+                                            case 4: // 100 #<data>
+
+                                                break;
+                                        }
                                         break;
                                 }
                                 break;
@@ -860,12 +936,7 @@ namespace Moo68k
     /// </remarks>
     public class MemoryModule // static class for now
     {
-        public MemoryModule()
-        {
-            Bank = new byte[0xFFFF];
-        }
-
-        public MemoryModule(int capacity)
+        public MemoryModule(int capacity = 0xFFFF)
         {
             Bank = new byte[capacity];
         }
