@@ -152,14 +152,37 @@ namespace Moo68k
         }
         uint[] addressRegisters;
 
+        /* What to do with those three?
+         * Only one register is active, but..
+         * Eh
+         */
         /// <summary>
         /// User Stack Pointer (A7')
         /// </summary>
         public uint USP { get; private set; }
         /// <summary>
-        /// System Stack Pointer (A7") (MSP? SP?)
+        /// Stack Pointer
         /// </summary>
-        public uint SSP { get; private set; }
+        public uint MSP { get; private set; }
+        /// <summary>
+        /// Interupt Stack Pointer
+        /// </summary>
+        public uint ISP { get; private set; }
+
+        /// <summary>
+        /// System Stack Pointer (A7")
+        /// </summary>
+        /// <remarks>
+        /// Page 2-28, 2.6.1
+        /// Address register seven (A7) is the system stack pointer.
+        /// Either the user stack pointer (USP), the interrupt stack pointer(ISP),
+        /// or the master stack pointer (MSP) is active at any one time.
+        /// </remarks>
+        public uint SSP
+        {
+            get { return addressRegisters[7]; }
+            private set { addressRegisters[7] = value; }
+        }
         /// <summary>
         /// Program Counter (24-bit)
         /// </summary>
@@ -694,7 +717,8 @@ namespace Moo68k
                         */
                         switch (mode)
                         {
-                            case 0: // tmp
+                            // Dn – < ea > = Dn
+                            case 0:
                             case 1:
                             case 2:
                                 switch (eamode)
@@ -703,10 +727,15 @@ namespace Moo68k
                                         dataRegisters[eareg] -= operand;
                                         break;
                                     case 1: // 001 An (For byte-sized operation, address register direct is not allowed.)
-
+                                        if (mode != 0)
+                                            addressRegisters[eareg] -= operand;
                                         break;
                                     case 2: // 010 (An)
+                                        {
+                                            int address = (int)addressRegisters[eareg];
 
+
+                                        }
                                         break;
                                     case 3: // 011 (An)+
 
@@ -743,19 +772,29 @@ namespace Moo68k
                                 }
                                 break;
 
+                            // < ea > – Dn = < ea >
                             case 4:
                             case 5:
                             case 6:
                                 switch (eamode)
                                 {
-                                    case 0: // 000 Dn
-
-                                        break;
-                                    case 1: // 001 An (For byte-sized operation, address register direct is not allowed.)
-
-                                        break;
                                     case 2: // 010 (An)
+                                        {
+                                            int address = (int)addressRegisters[eareg];
 
+                                            switch (mode)
+                                            {
+                                                case 0:
+                                                    Memory.WriteByte(address, (byte)(Memory.ReadByte(address) - operand));
+                                                    break;
+                                                case 1:
+                                                    Memory.WriteWord(address, (short)(Memory.ReadWord(address) - operand));
+                                                    break;
+                                                case 2:
+                                                    Memory.WriteLong(address, (int)(Memory.ReadLong(address) - operand));
+                                                    break;
+                                            }
+                                        }
                                         break;
                                     case 3: // 011 (An)+
 
@@ -792,7 +831,7 @@ namespace Moo68k
                                 }
                                 break;
                         }
-
+                        
                         /*
                             X — Set to the value of the carry bit.
                             N — Set if the result is negative; cleared otherwise.
