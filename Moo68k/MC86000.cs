@@ -23,26 +23,6 @@ using System.Text;
 
 namespace Moo68k
 {
-    [Flags]
-    public enum CCRFlags : byte
-    {
-        C = 1, V = 2, Z = 4, N = 8, X = 16 // Am I even going to use these?
-    }
-
-    [Flags]
-    public enum CCRFlagsSimplified : byte
-    {
-        Carry = 1, Overflow = 2, Zero = 4, Negative = 8, Extend = 16
-    }
-
-    /// <summary>
-    /// Interface for the M68000 series.
-    /// </summary>
-    /*interface IM68000
-    {
-        
-    }*/
-
     /// <summary>
     /// Represents a Motorola 68000 microprocessor.
     /// </summary>
@@ -387,7 +367,7 @@ namespace Moo68k
         }
 
         /// <summary>
-        /// Seperate the operation code from the operand and execute the opcode.
+        /// Seperate the operation code from the operand and execute.
         /// </summary>
         /// <param name="instruction">Combined instruction.</param>
         public void Execute(ulong instruction)
@@ -913,148 +893,6 @@ namespace Moo68k
                 SSP – 4 → SSP; PC → (SSP); SSP – 2 → SSP;
                 SR → (SSP); Vector Address → PC
              */
-        }
-    }
-
-    /// <summary>
-    /// Compilers, decompilers, S-Record file maker, etc.
-    /// </summary>
-    public static class M68000Tools
-    {
-        /* Notes
-         * - Abuse << to push in bits while compiling
-         */
-
-        const int DATA_BUS_WIDTH = 16;
-        
-        public enum FileFormat : byte { S19 = 16, S28 = 24, S37 = 32 }
-
-        static class SRecord
-        {
-            public static string Compile(string source, string path)
-            {
-                //TODO: Compile(string)
-
-                throw new NotImplementedException();
-            }
-
-            public static void CompileToFile(string source, string path)
-            {
-                CompileToFile(source, path, FileFormat.S28, Encoding.ASCII);
-            }
-
-            public static void CompileToFile(string source, string path, FileFormat format)
-            {
-                CompileToFile(source, path, format, Encoding.ASCII);
-            }
-
-            public static void CompileToFile(string source, string path, FileFormat format, Encoding encoding, bool capitalized = true)
-            {
-                //TODO: CompileToFile(string)
-
-                throw new NotImplementedException();
-
-                using (StreamWriter sw = new StreamWriter(path, false, encoding))
-                {
-
-
-
-                }
-            }
-        }
-
-
-    }
-
-    /// <summary>
-    /// Represents a memory module.
-    /// </summary>
-    /// <remarks>
-    /// Not to worry about endianness! BitConverter takes care of that for us.
-    /// Also never stackalloc the memory.. it's supposed to be on the heap.
-    /// </remarks>
-    public class MemoryModule // static class for now
-    {
-        public MemoryModule(int capacity = 0xFFFF)
-        {
-            Bank = new byte[capacity];
-        }
-
-        /// <summary>
-        /// Memory bank, which enables you to do some memory mapping!
-        /// </summary>
-        //TODO: Consider using a Dictionary<int, byte>(capacity); <address, data>
-        //   .. Even though writing and reading times may be slower
-        public byte[] Bank { get; private set; }
-
-        // Byte
-
-        public byte ReadByte(int address)
-        {
-            return Bank[address];
-        }
-
-        public void WriteByte(int address, byte value)
-        {
-            Bank[address] = value;
-        }
-
-        // Word
-
-        public short ReadWord(int address)
-        {
-            return BitConverter.ToInt16(Bank, address);
-        }
-
-        public void WriteWord(int address, short value)
-        {
-            Write(address, BitConverter.GetBytes(value));
-        }
-
-        // Unsigned word
-
-        public ushort ReadUWord(int address)
-        {
-            return BitConverter.ToUInt16(Bank, address);
-        }
-
-        public void WriteUWord(int address, ushort value)
-        {
-            Write(address, BitConverter.GetBytes(value));
-        }
-
-        // Long
-
-        public int ReadLong(int address)
-        {
-            return BitConverter.ToInt32(Bank, address);
-        }
-
-        public void WriteLong(int address, int value)
-        {
-            Write(address, BitConverter.GetBytes(value));
-        }
-
-        // Unsigned long
-
-        public uint ReadULong(int address)
-        {
-            return BitConverter.ToUInt32(Bank, address);
-        }
-
-        public void WriteULong(int address, uint value)
-        {
-            Write(address, BitConverter.GetBytes(value));
-        }
-
-        // Misc.
-
-        void Write(int address, byte[] values)
-        {
-            for (int i = 0; i < values.Length; ++i)
-            {
-                Bank[address + i] = values[i];
-            }
         }
     }
 }

@@ -40,6 +40,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MC86000.cs" />
+    <Compile Include="MemoryModule.cs" />
+    <Compile Include="Moo68kTools.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

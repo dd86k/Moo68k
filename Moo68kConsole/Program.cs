@@ -15,7 +15,6 @@ namespace Moo86kConsole
             m68k.FlagIsSupervisor = true;
             m68k.FlagTracingEnabled = true;
 
-
             WriteLine();
             WriteLine("Press RETURN to start random test.");
             ReadLine();
