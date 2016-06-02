@@ -8,6 +8,13 @@ namespace Moo86kUnitTest
     public class Moo86kUnitTest
     {
         [TestMethod]
+        [TestCategory("I/O")]
+        public void TestInput()
+        {
+            //TODO: TestInput (Test)
+        }
+
+        [TestMethod]
         [TestCategory("Data registers")]
         public void TestDataRegisters()
         {

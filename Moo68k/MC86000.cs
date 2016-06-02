@@ -352,7 +352,7 @@ namespace Moo68k
         /// Compile mnemonic instructions and execute.
         /// </summary>
         /// <param name="input">Mnemonic instructions.</param>
-        public void Interpret(string input)
+        public void InterpretAssembly(string input)
         {
             //TODO: Interpret(string)
         }
@@ -372,7 +372,16 @@ namespace Moo68k
         /// <param name="instruction">Combined instruction.</param>
         public void Execute(ulong instruction)
         {
-            Execute((ushort)(instruction >> 32), (uint)(instruction & 0xFFFFFFFF));
+            Execute((uint)(instruction >> 32), (uint)(instruction & 0xFFFFFFFF));
+        }
+
+        /// <summary>
+        /// Seperate the operation code from the operand and execute.
+        /// </summary>
+        /// <param name="instruction">Combined instruction.</param>
+        public void Execute(long instruction)
+        {
+            Execute((uint)(instruction >> 32), (uint)(instruction & 0xFFFFFFFF));
         }
 
         /// <summary>
@@ -380,16 +389,16 @@ namespace Moo68k
         /// </summary>
         /// <param name="opcode">Operation code.</param>
         /// <param name="operand">Operand.</param>
-        public void Execute(ushort opcode, uint operand = 0)
+        public void Execute(uint opcode, uint operand = 0)
         {
             //TODO: Clean up (at some point)
 
             if (FlagTracingEnabled)
                 Trace.WriteLine($"{PC:X8}  {opcode:X4}  {operand:X8}");
 
-            // [0000]0000 0000 0000
+            // 0000 0000 0000 0000 [0000]0000 0000 0000
             // Operation Code
-            int oc = (opcode >> 12) & 0xF;
+            uint oc = (opcode >> 12) & 0xF;
 
             // Page 8-4, 8.2 OPERATION CODE MAP
             switch (oc)
@@ -408,19 +417,19 @@ namespace Moo68k
                 case 3: // Move word
                     {
                         // Size, Page 4-116
-                        int sz = (opcode >> 12) & 3; // 00[00]000 000 000 000
+                        uint sz = (opcode >> 12) & 3; // 00[00]000 000 000 000
 
                         // Desition, Page 4-117
                         // Destination register
-                        int dr = (opcode >> 9) & 7; //  00 00[000]000 000 000
+                        uint dr = (opcode >> 9) & 7; //  00 00[000]000 000 000
                         // Destination mode
-                        int dm = (opcode >> 6) & 7; //  00 00 000[000]000 000
+                        uint dm = (opcode >> 6) & 7; //  00 00 000[000]000 000
                         
                         // Source, Page 4-118
                         // Source mode
-                        int sm = (opcode >> 3) & 7; //  00 00 000 000[000]000
+                        uint sm = (opcode >> 3) & 7; //  00 00 000 000[000]000
                         // Source register
-                        int sr = opcode & 7; //         00 00 000 000 000[000]
+                        uint sr = opcode & 7; //         00 00 000 000 000[000]
 
                         if (FlagTracingEnabled)
                             Trace.WriteLine($"MOVE sz={sz} dr={dr} dm={dm} sm={sm} sr={sr}");
@@ -542,7 +551,7 @@ namespace Moo68k
                                             case 1: // 001 (xxx).L
                                                 if (sz > 1)
                                                     dataRegisters[dr] = operand;
-                                                //TODO: else what if size is byte (01)
+                                                //TODO: else what if "size" is byte (01)
                                                 break;
                                             case 2: // 010 (d16, PC)
 
@@ -631,7 +640,7 @@ namespace Moo68k
                     break;
                 #endregion
                 
-                #region 0101 - ADDQ/SUBQ/Scc/DBcc/TRAPc c
+                #region 0101 - ADDQ/SUBQ/Scc/DBcc/TRAPcc
                 case 5:
                     {
 
@@ -653,7 +662,7 @@ namespace Moo68k
                         // Page 4-134
                         // Register 0111 [000]0 0000 0000
                         // Data     0111 0000 [0000 0000]
-                        int data = opcode & 0xFF;
+                        uint data = opcode & 0xFF;
 
                         dataRegisters[(opcode >> 9) & 7] = (uint)data;
 
@@ -678,16 +687,16 @@ namespace Moo68k
                     {
                         // Page 4-174
                         // Register                   1001 [000] 000 000 000
-                        int reg = (opcode >> 9) & 7;
+                        uint reg = (opcode >> 9) & 7;
 
                         // Opmode                     1001 000 [000] 000 000
-                        int mode = (opcode >> 6) & 7;
+                        uint mode = (opcode >> 6) & 7;
                         
                         // Effective Address Mode     1001 000 000 [000] 000
-                        int eamode = (opcode >> 3) & 7;
+                        uint eamode = (opcode >> 3) & 7;
 
                         // Effective Address Register 1001 000 000 000 [000]
-                        int eareg = opcode & 7;
+                        uint eareg = opcode & 7;
 
                         /*
                             Opmode field
