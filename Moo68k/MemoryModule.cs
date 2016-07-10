@@ -1,19 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+//TODO: Manual memory mapping instead of using BitConverter
 
 namespace Moo68k
 {
     /// <summary>
     /// Represents a memory module.
     /// </summary>
-    /// <remarks>
-    /// Not to worry about endianness! BitConverter takes care of that for us.
-    /// Also never stackalloc the memory.. it's supposed to be on the heap.
-    /// </remarks>
-    public class MemoryModule // static class for now
+    public class MemoryModule
     {
         public MemoryModule(int capacity = 0xFFFF)
         {
@@ -21,11 +15,10 @@ namespace Moo68k
         }
 
         /// <summary>
-        /// Memory bank, which enables you to do some memory mapping!
+        /// Memory bank, containing the data.
         /// </summary>
-        //TODO: Consider using a Dictionary<int, byte>(capacity); <address, data>
-        //   .. Even though writing and reading times may be slower
         public byte[] Bank { get; private set; }
+        //TODO: Consider: Use "smart" Dictionary<int, int>?
 
         // Byte
 
@@ -33,25 +26,28 @@ namespace Moo68k
         {
             return Bank[address];
         }
-
+        
         public void WriteByte(int address, byte value)
         {
             Bank[address] = value;
         }
 
-        // Word
+        // Word / Unsigned Word
 
         public short ReadWord(int address)
         {
             return BitConverter.ToInt16(Bank, address);
         }
 
+        public short ReadWord(uint address)
+        {
+            return BitConverter.ToInt16(Bank, (int)address);
+        }
+
         public void WriteWord(int address, short value)
         {
             Write(address, BitConverter.GetBytes(value));
         }
-
-        // Unsigned word
 
         public ushort ReadUWord(int address)
         {
@@ -63,19 +59,22 @@ namespace Moo68k
             Write(address, BitConverter.GetBytes(value));
         }
 
-        // Long
+        // Long / Unsigned Long
 
         public int ReadLong(int address)
         {
             return BitConverter.ToInt32(Bank, address);
         }
 
+        public int ReadLong(uint address)
+        {
+            return BitConverter.ToInt32(Bank, (int)address);
+        }
+
         public void WriteLong(int address, int value)
         {
             Write(address, BitConverter.GetBytes(value));
         }
-
-        // Unsigned long
 
         public uint ReadULong(int address)
         {

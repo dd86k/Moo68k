@@ -3,20 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-/* Design TODOs
- * 
- * MC86000 -- Struct or class?
- *     Class -- Let's not overflow the stack, okay? Poor thing.
- * Incorporate FPCC, QB, EXC, AEXC into FPSR?
- *     Yes and no -- Those bytes are into FPSR, but we can do getters.
- * Where to increase Program Counter?
- *     
- * Decide what to make as public property.
- *     
- * Base class or interface?
- *     Probably class.
- */
-
 /* set it with OR
  * toggle with XOR
  * unset with AND NOT */
@@ -137,32 +123,9 @@ namespace Moo68k
          * Eh
          */
         /// <summary>
-        /// User Stack Pointer (A7')
-        /// </summary>
-        public uint USP { get; private set; }
-        /// <summary>
         /// Stack Pointer
         /// </summary>
-        public uint MSP { get; private set; }
-        /// <summary>
-        /// Interupt Stack Pointer
-        /// </summary>
-        public uint ISP { get; private set; }
-
-        /// <summary>
-        /// System Stack Pointer (A7")
-        /// </summary>
-        /// <remarks>
-        /// Page 2-28, 2.6.1
-        /// Address register seven (A7) is the system stack pointer.
-        /// Either the user stack pointer (USP), the interrupt stack pointer(ISP),
-        /// or the master stack pointer (MSP) is active at any one time.
-        /// </remarks>
-        public uint SSP
-        {
-            get { return addressRegisters[7]; }
-            private set { addressRegisters[7] = value; }
-        }
+        public uint SP { get; private set; }
         /// <summary>
         /// Program Counter (24-bit)
         /// </summary>
@@ -176,8 +139,8 @@ namespace Moo68k
         /// 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
         /// T1 T0  S  M  0 I2 I1 I0  0  0  0  X  N  Z  V  C
         ///  0  0  1  0  0  1  1  1  0  0  0  0  0  0  0  0 - Reset (0x2700)
-        /// |----------------------||---------------------|
-        ///       System byte          User byte (CCR)
+        /// |---------------------|  |--------------------|
+        ///       System byte           User byte (CCR)
         /// --
         /// T1, T0 - TRACE MODE
         ///  0   0 - NO TRACE
@@ -192,7 +155,7 @@ namespace Moo68k
         /// M - Master/Interupt state
         /// S, M - ACTIVE STACK
         /// 0, x - USP (x being 0 or 1)
-        /// 1, 0 - ISP Read note
+        /// 1, 0 - ISP (Read note)
         /// 1, 1 - MSP
         /// --
         /// I1, I2, I3 - Interrupt mask level.
@@ -209,9 +172,7 @@ namespace Moo68k
             set
             {
                 //TODO: Tracing is only with supervisor powers!
-
-                //SR = value ? (ushort)(SR | 0x8000) : (ushort)(SR & ~0x8000); could be cool
-
+                
                 if (value)
                     SR |= 0x8000;
                 else
@@ -293,14 +254,17 @@ namespace Moo68k
 
         uint FPSR; // Floating-Point Status Register <-+
                                                        |
-        //byte FPCC; // FPSR Condition Code Byte   ----+
-        //byte QB;   // FPSR Quotient byte   ----------+
-        //byte EXC;  // FPSR Exception Status Byte   --+
-        //byte AEXC; // FPSR Accrued Exception Byte   -+
+        //byte FPCC; // FPSR Condition Code Byte ------+
+        //byte QB;   // FPSR Quotient byte ------------+
+        //byte EXC;  // FPSR Exception Status Byte ----+
+        //byte AEXC; // FPSR Accrued Exception Byte ---+
 
         uint FPIAR; // Floating-Point Instruction Address Register
         */
         
+        /// <summary>
+        /// The installed <see cref="MemoryModule"/>.
+        /// </summary>
         public MemoryModule Memory;
 
         // Constructors ✧(≖ ◡ ≖✿)
@@ -331,7 +295,7 @@ namespace Moo68k
         /// </summary>
         public void Reset()
         {
-            A7 = SSP = Memory.ReadULong(0);
+            A7 = SP = Memory.ReadULong(0);
 
             PC = Memory.ReadULong(4);
 
@@ -342,14 +306,9 @@ namespace Moo68k
         {
             //TODO: Step(void)
         }
-        
-        public void Insert(ushort op) // into the stack??
-        {
-            //TODO: Insert(ushort)
-        }
 
         /// <summary>
-        /// Compile mnemonic instructions and execute.
+        /// Compile from mnemonic instructions and execute.
         /// </summary>
         /// <param name="input">Mnemonic instructions.</param>
         public void InterpretAssembly(string input)
@@ -358,7 +317,7 @@ namespace Moo68k
         }
 
         /// <summary>
-        /// Compile a S-Record line and execute.
+        /// Compile from a S-Record line and execute.
         /// </summary>
         /// <param name="input">S-Record line.</param>
         public void InterpretSRecord(string input)
@@ -396,7 +355,7 @@ namespace Moo68k
             if (FlagTracingEnabled)
                 Trace.WriteLine($"{PC:X8}  {opcode:X4}  {operand:X8}");
 
-            // 0000 0000 0000 0000 [0000]0000 0000 0000
+            // [0000]0000 0000 0000
             // Operation Code
             uint oc = (opcode >> 12) & 0xF;
 
@@ -495,8 +454,8 @@ namespace Moo68k
                                     case 0: // 000 Dn
                                         dataRegisters[dr] = addressRegisters[sr];
 
-                                        FlagIsNegative = dataRegisters[sr] < 0;
-                                        FlagIsZero = dataRegisters[sr] == 0;
+                                        FlagIsNegative = addressRegisters[sr] < 0;
+                                        FlagIsZero = addressRegisters[sr] == 0;
                                         break;
                                     case 2: // 010 (An)
 
@@ -549,8 +508,7 @@ namespace Moo68k
                                         {
                                             case 0: // 000 (xxx).W
                                             case 1: // 001 (xxx).L
-                                                if (sz > 1)
-                                                    dataRegisters[dr] = operand;
+                                                dataRegisters[dr] = operand;
                                                 //TODO: else what if "size" is byte (01)
                                                 break;
                                             case 2: // 010 (d16, PC)
@@ -564,8 +522,27 @@ namespace Moo68k
                                                 break;
                                         }
                                         break;
-                                    case 2: // 010 (An)
 
+                                    case 2: // 010 (An)
+                                        switch (sr)
+                                        {
+                                            case 0: // 000 (xxx).W
+                                                addressRegisters[dr] = (uint)Memory.ReadWord(operand);
+                                                break;
+                                            case 1: // 001 (xxx).L
+                                                addressRegisters[dr] = (uint)Memory.ReadLong(operand);
+                                                //TODO: else what if "size" is byte (01)
+                                                break;
+                                            case 2: // 010 (d16, PC)
+
+                                                break;
+                                            case 3: // 011 (d8, PC, Xn)
+
+                                                break;
+                                            case 4: // 100 #<data>
+                                                addressRegisters[dr] = operand; // I think?
+                                                break;
+                                        }
                                         break;
                                 }
                                 break;
@@ -595,7 +572,8 @@ namespace Moo68k
                                 SSP – 2 → SSP; SR → (SSP);
                                 Illegal Instruction Vector Address → PC
 
-                                *The MC68000 and MC68008 cannot write the vector offset and format code to the system stack.*/
+                                * The MC68000 and MC68008 cannot write the vector
+                                * offset and format code to the system stack. */
 
 
 
@@ -603,10 +581,10 @@ namespace Moo68k
                             case 0x4E70: // RESET
                                 if (FlagIsSupervisor)
                                     Reset();
-                                //TODO: else TRAP
+                                //TODO: else TRAP -- But what vector?
                                 return;
                             case 0x4E71: // NOP Page 4-147
-                                PC += 16; // or stack pointer?!
+                                //TODO: Page 4-147
                                 return;
                             case 0x4E72: //TODO: STOP
 
@@ -660,11 +638,11 @@ namespace Moo68k
                 case 7:
                     {
                         // Page 4-134
-                        // Register 0111 [000]0 0000 0000
-                        // Data     0111 0000 [0000 0000]
+                        // Register 0111 nnn0 0000 0000
+                        // Data     0111 0000 nnnn nnnn
                         uint data = opcode & 0xFF;
 
-                        dataRegisters[(opcode >> 9) & 7] = (uint)data;
+                        dataRegisters[(opcode >> 9) & 7] = data;
 
                         FlagIsNegative = data < 0;
                         FlagIsZero = data == 0;
@@ -686,27 +664,28 @@ namespace Moo68k
                 case 9:
                     {
                         // Page 4-174
-                        // Register                   1001 [000] 000 000 000
+                        // Register                   1001 nnn 000 000 000
                         uint reg = (opcode >> 9) & 7;
 
-                        // Opmode                     1001 000 [000] 000 000
+                        // Opmode                     1001 000 nnn 000 000
                         uint mode = (opcode >> 6) & 7;
                         
-                        // Effective Address Mode     1001 000 000 [000] 000
+                        // Effective Address Mode     1001 000 000 nnn 000
                         uint eamode = (opcode >> 3) & 7;
 
-                        // Effective Address Register 1001 000 000 000 [000]
+                        // Effective Address Register 1001 000 000 000 nnn
                         uint eareg = opcode & 7;
 
                         /*
                             Opmode field
                             Byte  Word  Long  Operation
-                            000   001   010   Dn – < ea > = Dn
-                            100   101   110   < ea > – Dn = < ea >
+                            000   001   010   Dn – <ea> = Dn
+                            100   101   110   <ea> – Dn = <ea>
                         */
+
                         switch (mode)
                         {
-                            // Dn – < ea > = Dn
+                            // Dn – <ea> = Dn
                             case 0:
                             case 1:
                             case 2:
@@ -721,7 +700,7 @@ namespace Moo68k
                                         break;
                                     case 2: // 010 (An)
                                         {
-                                            int address = (int)addressRegisters[eareg];
+                                            uint address = addressRegisters[eareg];
 
 
                                         }
