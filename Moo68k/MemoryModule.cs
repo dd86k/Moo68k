@@ -88,11 +88,25 @@ namespace Moo68k
 
         // Misc.
 
-        void Write(int address, byte[] values)
+        void Write(int address, byte[] bytes)
         {
-            for (int i = 0; i < values.Length; ++i)
+            for (int i = 0; i < bytes.Length; ++i)
             {
-                Bank[address + i] = values[i];
+                Bank[address + i] = bytes[i];
+            }
+        }
+
+        // Indexers
+
+        public byte this[int address]
+        {
+            get
+            {
+                return Bank[address];
+            }
+            set
+            {
+                Bank[address] = value;
             }
         }
     }

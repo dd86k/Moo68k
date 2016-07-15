@@ -11,7 +11,7 @@ namespace Moo86kUnitTest
         [TestCategory("I/O")]
         public void TestInput()
         {
-            //TODO: TestInput (Test)
+
         }
 
         [TestMethod]
@@ -87,9 +87,25 @@ namespace Moo86kUnitTest
 
         [TestMethod]
         [TestCategory("Processor")]
-        public void TestSubstraction()
+        public void TestSubtraction()
         {
+            MC86000 m68k = new MC86000();
 
+            // Move immidiate value long 73 into register D0
+            m68k.Execute(0x203C, 73);
+            // Subtract immidiate value long 4 from register D0
+            m68k.Execute(0x90BC, 4);
+
+            Assert.AreEqual(m68k.D0, 69u);
+
+            // Move immidiate value long 63 into register D1 and
+            // Move immidiate value long 21 into register D2
+            m68k.Execute(0x223C, 63);
+            m68k.Execute(0x243C, 21);
+            // Subtract D1 with D2 (long)
+            m68k.Execute(0x9282);
+
+            Assert.AreEqual(m68k.D1, 42u);
         }
     }
 
@@ -98,7 +114,6 @@ namespace Moo86kUnitTest
     {
         [TestMethod]
         [TestCategory("Compiler")]
-        [TestCategory("Tools")]
         public void TestCompiler()
         {
 

@@ -10,7 +10,13 @@ namespace Moo86kConsole
         {
             WriteLine("Creating MC86000...");
             MC86000 m68k = new MC86000();
-            
+
+
+            m68k.Execute(0x223C, 63);
+            m68k.Execute(0x243C, 21);
+            m68k.Execute(0x9282);
+            WriteLine($"D1={m68k.D1}");
+
             m68k.FlagIsSupervisor = true;
             //m68k.FlagTracingEnabled = true;
 

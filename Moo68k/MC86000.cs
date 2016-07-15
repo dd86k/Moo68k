@@ -270,7 +270,7 @@ namespace Moo68k
         // Constructors ✧(≖ ◡ ≖✿)
 
         /// <summary>
-        /// Constructs a new MC86000 with 64 KB of RAM.
+        /// Constructs a new MC86000.
         /// </summary>
         /// <param name="memorysize">Optional memory size in bytes.</param>
         public MC86000(int memorysize = 0xFFFF)
@@ -667,7 +667,7 @@ namespace Moo68k
                         // Register                   1001 nnn 000 000 000
                         uint reg = (opcode >> 9) & 7;
 
-                        // Opmode                     1001 000 nnn 000 000
+                        // Opmode *                   1001 000 nnn 000 000
                         uint mode = (opcode >> 6) & 7;
                         
                         // Effective Address Mode     1001 000 000 nnn 000
@@ -677,7 +677,7 @@ namespace Moo68k
                         uint eareg = opcode & 7;
 
                         /*
-                            Opmode field
+                            * Opmode field
                             Byte  Word  Long  Operation
                             000   001   010   Dn – <ea> = Dn
                             100   101   110   <ea> – Dn = <ea>
@@ -689,12 +689,13 @@ namespace Moo68k
                             case 0:
                             case 1:
                             case 2:
-                                switch (eamode)
+                                switch (eamode) // <ea>
                                 {
                                     case 0: // 000 Dn
-                                        dataRegisters[eareg] -= operand;
+                                        dataRegisters[reg] -= dataRegisters[eareg];
                                         break;
-                                    case 1: // 001 An (For byte-sized operation, address register direct is not allowed.)
+                                    case 1: // 001 An
+                                        // For byte-sized operation, address register direct is not allowed.
                                         if (mode != 0)
                                             addressRegisters[eareg] -= operand;
                                         break;
@@ -717,7 +718,7 @@ namespace Moo68k
                                     case 6: // 110 (d8, An, Xn)
 
                                         break;
-                                    case 7:
+                                    case 7: // Immidiate
                                         switch (eareg)
                                         {
                                             case 0: // 000 (xxx).W
@@ -733,14 +734,14 @@ namespace Moo68k
 
                                                 break;
                                             case 4: // 100 #<data>
-
+                                                dataRegisters[reg] -= operand;
                                                 break;
                                         }
                                         break;
                                 }
                                 break;
 
-                            // < ea > – Dn = < ea >
+                            // <ea> – Dn = <ea>
                             case 4:
                             case 5:
                             case 6:
