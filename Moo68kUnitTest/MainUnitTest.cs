@@ -8,71 +8,71 @@ namespace Moo86kUnitTest
     public class Moo86kUnitTest
     {
         [TestMethod]
-        [TestCategory("I/O")]
+        [TestCategory("Processor")]
         public void TestInput()
         {
 
         }
 
         [TestMethod]
-        [TestCategory("Registers")]
+        [TestCategory("Processor")]
         public void TestRegisters()
         {
             MC86000 m68k = new MC86000();
 
             // Data
             m68k.Execute(0x203C, 1);
-            Assert.AreEqual(m68k.D0, 1u);
+            Assert.AreEqual(1u, m68k.D0);
             m68k.Execute(0x223C, 2);
-            Assert.AreEqual(m68k.D1, 2u);
+            Assert.AreEqual(2u, m68k.D1);
             m68k.Execute(0x243C, 3);
-            Assert.AreEqual(m68k.D2, 3u);
+            Assert.AreEqual(3u, m68k.D2);
             m68k.Execute(0x263C, 4);
-            Assert.AreEqual(m68k.D3, 4u);
+            Assert.AreEqual(4u, m68k.D3);
             m68k.Execute(0x283C, 5);
-            Assert.AreEqual(m68k.D4, 5u);
+            Assert.AreEqual(5u, m68k.D4);
             m68k.Execute(0x2A3C, 6);
-            Assert.AreEqual(m68k.D5, 6u);
+            Assert.AreEqual(6u, m68k.D5);
             m68k.Execute(0x2C3C, 7);
-            Assert.AreEqual(m68k.D6, 7u);
+            Assert.AreEqual(7u, m68k.D6);
             m68k.Execute(0x2E3C, 8);
-            Assert.AreEqual(m68k.D7, 8u);
+            Assert.AreEqual(8u, m68k.D7);
 
             // Address
             m68k.Execute(0x20BC, 11);
-            Assert.AreEqual(m68k.A0, 11u);
+            Assert.AreEqual(11u, m68k.A0);
             m68k.Execute(0x22BC, 12);
-            Assert.AreEqual(m68k.A1, 12u);
+            Assert.AreEqual(12u, m68k.A1);
             m68k.Execute(0x24BC, 13);
-            Assert.AreEqual(m68k.A2, 13u);
+            Assert.AreEqual(13u, m68k.A2);
             m68k.Execute(0x26BC, 14);
-            Assert.AreEqual(m68k.A3, 14u);
+            Assert.AreEqual(14u, m68k.A3);
             m68k.Execute(0x28BC, 15);
-            Assert.AreEqual(m68k.A4, 15u);
+            Assert.AreEqual(15u, m68k.A4);
             m68k.Execute(0x2ABC, 16);
-            Assert.AreEqual(m68k.A5, 16u);
+            Assert.AreEqual(16u, m68k.A5);
             m68k.Execute(0x2CBC, 17);
-            Assert.AreEqual(m68k.A6, 17u);
+            Assert.AreEqual(17u, m68k.A6);
             m68k.Execute(0x2EBC, 18);
-            Assert.AreEqual(m68k.A7, 18u);
+            Assert.AreEqual(18u, m68k.A7);
 
-            // Those two instructions is from a manual (mbsd_l2.pdf) from
+            // The next two instructions is from a manual (mbsd_l2.pdf) from
             // Ricardo Gutierrez-Osuna, Wright State University
 
             // MOVE.L #$12,d0 | 00 10 000 000 111 100 | 203C 00000012
             m68k.Execute(0x203C, 0x12);
-            Assert.AreEqual(m68k.D0, 0x12u);
+            Assert.AreEqual(0x12u, m68k.D0);
 
             // MOVE.B data,d1 | 00 01 001 000 111 001 | 1239 00002000
             // self note: This goes at the address 2000 stored in data (a variable?) and
             //            loads 24h into D1 (manually?)
             //            Is this due to a higher language?
             //m68k.Execute(0x1239, 0x2000);
-            //Assert.AreEqual(m68k.D1, 24u);
+            //Assert.AreEqual(24u, m68k.D1);
         }
 
         [TestMethod]
-        [TestCategory("Memory")]
+        [TestCategory("Processor")]
         public void TestMemory()
         {
 
@@ -82,7 +82,23 @@ namespace Moo86kUnitTest
         [TestCategory("Processor")]
         public void TestAddition()
         {
+            MC86000 m68k = new MC86000();
 
+            // Move immidiate value long 4 into register D0
+            m68k.Execute(0x203C, 4);
+            // Add immidiate value long 8 with register D0
+            m68k.Execute(0xD0BC, 8);
+
+            Assert.AreEqual(12u, m68k.D0);
+
+            // Move immidiate value long 10 into register D1 and
+            // Move immidiate value long 11 into register D2
+            m68k.Execute(0x223C, 10);
+            m68k.Execute(0x243C, 11);
+            // Add D1 with the value of D2 (long)
+            m68k.Execute(0xD382);
+
+            Assert.AreEqual(21u, m68k.D1);
         }
 
         [TestMethod]
@@ -93,19 +109,19 @@ namespace Moo86kUnitTest
 
             // Move immidiate value long 73 into register D0
             m68k.Execute(0x203C, 73);
-            // Subtract immidiate value long 4 from register D0
+            // Subtract immidiate value long 4 with register D0
             m68k.Execute(0x90BC, 4);
 
-            Assert.AreEqual(m68k.D0, 69u);
+            Assert.AreEqual(69u, m68k.D0);
 
             // Move immidiate value long 63 into register D1 and
             // Move immidiate value long 21 into register D2
             m68k.Execute(0x223C, 63);
             m68k.Execute(0x243C, 21);
-            // Subtract D1 with D2 (long)
+            // Subtract D1 with the value of D2 (long)
             m68k.Execute(0x9282);
 
-            Assert.AreEqual(m68k.D1, 42u);
+            Assert.AreEqual(42u, m68k.D1);
         }
     }
 
@@ -113,7 +129,7 @@ namespace Moo86kUnitTest
     public class Moo86kToolsUnitTest
     {
         [TestMethod]
-        [TestCategory("Compiler")]
+        [TestCategory("Tools")]
         public void TestCompiler()
         {
 

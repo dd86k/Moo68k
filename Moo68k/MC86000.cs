@@ -840,6 +840,153 @@ namespace Moo68k
                 case 13:
                     {
 
+                        // Page 4-174
+                        // Register                   1001 nnn 000 000 000
+                        uint reg = (opcode >> 9) & 7;
+
+                        // Opmode *                   1001 000 nnn 000 000
+                        uint mode = (opcode >> 6) & 7;
+
+                        // Effective Address Mode     1001 000 000 nnn 000
+                        uint eamode = (opcode >> 3) & 7;
+
+                        // Effective Address Register 1001 000 000 000 nnn
+                        uint eareg = opcode & 7;
+
+                        /*
+                            * Opmode field
+                            Byte  Word  Long  Operation
+                            000   001   010   <ea> – Dn = <ea>
+                            100   101   110   Dn – <ea> = Dn
+                        */
+
+                        switch (mode)
+                        {
+                            // <ea> – Dn = <ea>
+                            case 0:
+                            case 1:
+                            case 2:
+                                switch (eamode)
+                                {
+                                    case 2: // 010 (An)
+                                        {
+                                            int address = (int)addressRegisters[eareg];
+
+                                            switch (mode)
+                                            {
+                                                case 0:
+                                                    Memory.WriteByte(address, (byte)(Memory.ReadByte(address) + operand));
+                                                    break;
+                                                case 1:
+                                                    Memory.WriteWord(address, (short)(Memory.ReadWord(address) + operand));
+                                                    break;
+                                                case 2:
+                                                    Memory.WriteLong(address, (int)(Memory.ReadLong(address) + operand));
+                                                    break;
+                                            }
+                                        }
+                                        break;
+                                    case 3: // 011 (An)+
+
+                                        break;
+                                    case 4: // 100 -(An)
+
+                                        break;
+                                    case 5: // 101 (d16, An)
+
+                                        break;
+                                    case 6: // 110 (d8, An, Xn)
+
+                                        break;
+                                    case 7:
+                                        switch (eareg)
+                                        {
+                                            case 0: // 000 (xxx).W
+
+                                                break;
+                                            case 1: // 001 (xxx).L
+
+                                                break;
+                                            case 2: // 010 (d16, PC)
+
+                                                break;
+                                            case 3: // 011 (d8, PC, Xn)
+
+                                                break;
+                                            case 4: // 100 #<data>
+                                                dataRegisters[reg] += operand;
+                                                break;
+                                        }
+                                        break;
+                                }
+                                break;
+
+                            // Dn – <ea> = Dn
+                            case 4:
+                            case 5:
+                            case 6:
+                                switch (eamode) // <ea>
+                                {
+                                    case 0: // 000 Dn
+                                        dataRegisters[reg] += dataRegisters[eareg];
+                                        break;
+                                    case 1: // 001 An
+                                        // For byte-sized operation, address register direct is not allowed.
+                                        if (mode != 0)
+                                            addressRegisters[eareg] += operand;
+                                        break;
+                                    case 2: // 010 (An)
+                                        {
+                                            uint address = addressRegisters[eareg];
+
+
+                                        }
+                                        break;
+                                    case 3: // 011 (An)+
+
+                                        break;
+                                    case 4: // 100 -(An)
+
+                                        break;
+                                    case 5: // 101 (d16, An)
+
+                                        break;
+                                    case 6: // 110 (d8, An, Xn)
+
+                                        break;
+                                    case 7: // Immidiate
+                                        switch (eareg)
+                                        {
+                                            case 0: // 000 (xxx).W
+
+                                                break;
+                                            case 1: // 001 (xxx).L
+
+                                                break;
+                                            case 2: // 010 (d16, PC)
+
+                                                break;
+                                            case 3: // 011 (d8, PC, Xn)
+
+                                                break;
+                                            case 4: // 100 #<data>
+                                                dataRegisters[reg] += operand;
+                                                break;
+                                        }
+                                        break;
+                                }
+                                break;
+                        }
+
+                        /*
+                            X — Set to the same as the carry bit.
+                            N — Set if the result is negative; cleared otherwise.
+                            Z — Set if the result is zero; cleared otherwise.
+                            V — Set if an overflow is generated; cleared otherwise.
+                            C — Set if a carry is generated; cleared otherwise.
+                        */
+
+
                     }
                     break;
                 #endregion
