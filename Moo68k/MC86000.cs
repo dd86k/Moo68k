@@ -629,7 +629,89 @@ namespace Moo68k
                 #region 0101 - ADDQ/SUBQ/Scc/DBcc/TRAPcc
                 case 5:
                     {
+                        // Effective Address mode
+                        uint eamode = (opcode >> 3) & 7;
 
+                        // Effective Address register
+                        uint eareg = opcode & 7;
+
+                        switch ((opcode >> 6) & 3) // Size
+                        {
+                            case 0:
+                            case 1:
+                            case 2:
+                                // Data          nnn 0 00 000 000
+                                uint data = (opcode >> 9) & 7;
+
+                                switch (opcode & 256) // 000 n 00 000 000
+                                {
+                                    case 0: // ADDQ
+                                        switch (eamode)
+                                        {
+                                            case 0: // Dn
+                                                addressRegisters[eareg] +=
+                                                    data == 0 ? 8 : data;
+                                                break;
+
+                                            case 1:
+
+                                                break;
+                                        }
+                                        break;
+
+                                    case 256: // SUBQ
+                                        switch (eamode)
+                                        {
+                                            case 0: // Dn
+                                                addressRegisters[eareg] -=
+                                                    data == 0 ? 8 : data;
+                                                break;
+
+                                            case 1:
+
+                                                break;
+                                        }
+                                        break;
+                                }
+                                break;
+
+                            case 3: // Scc
+                                switch (eamode)
+                                {
+                                    case 0:
+
+                                        break;
+
+                                    case 1: // DBcc
+
+                                        break;
+
+                                    case 2:
+
+                                        break;
+
+                                    case 3:
+
+                                        break;
+
+                                    case 4:
+
+                                        break;
+
+                                    case 5:
+
+                                        break;
+
+                                    case 6:
+
+                                        break;
+                                        
+                                    case 7:
+
+                                        break;
+                                }
+                                break;
+                        }
                     }
                     break;
                 #endregion
