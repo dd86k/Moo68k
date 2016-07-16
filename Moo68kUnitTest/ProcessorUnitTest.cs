@@ -87,6 +87,7 @@ namespace Moo86kUnitTest
             // Move immidiate value long 4 into register D0
             m68k.Execute(0x203C, 4);
             // Add immidiate value long 8 with register D0
+            // ADD.L #8,D0
             m68k.Execute(0xD0BC, 8);
 
             Assert.AreEqual(12u, m68k.D0);
@@ -96,9 +97,20 @@ namespace Moo86kUnitTest
             m68k.Execute(0x223C, 10);
             m68k.Execute(0x243C, 11);
             // Add D1 with the value of D2 (long)
+            // ADD.L D2,D1
             m68k.Execute(0xD382);
 
             Assert.AreEqual(21u, m68k.D1);
+
+            // ADDQ.L 4,D1
+            m68k.Execute(0x5881);
+
+            Assert.AreEqual(25u, m68k.D1);
+
+            // ADDQ.L 8,D0
+            m68k.Execute(0x5080);
+
+            Assert.AreEqual(20u, m68k.D0);
         }
 
         [TestMethod]

@@ -72,10 +72,6 @@ namespace Moo68k
             get { return dataRegisters[7]; }
             private set { dataRegisters[7] = value; }
         }
-        public uint[] DataRegisters
-        {
-            get { return dataRegisters; }
-        }
         uint[] dataRegisters;
         
         /* Address registers */
@@ -119,10 +115,6 @@ namespace Moo68k
         {
             get { return addressRegisters[7]; }
             private set { addressRegisters[7] = value; }
-        }
-        public uint[] AddressRegisters
-        {
-            get { return addressRegisters; }
         }
         uint[] addressRegisters;
 
@@ -649,7 +641,7 @@ namespace Moo68k
                                         switch (eamode)
                                         {
                                             case 0: // Dn
-                                                addressRegisters[eareg] +=
+                                                dataRegisters[eareg] +=
                                                     data == 0 ? 8 : data;
                                                 break;
 
@@ -663,7 +655,7 @@ namespace Moo68k
                                         switch (eamode)
                                         {
                                             case 0: // Dn
-                                                addressRegisters[eareg] -=
+                                                dataRegisters[eareg] -=
                                                     data == 0 ? 8 : data;
                                                 break;
 
@@ -1161,6 +1153,17 @@ namespace Moo68k
                 SSP – 4 → SSP; PC → (SSP); SSP – 2 → SSP;
                 SR → (SSP); Vector Address → PC
              */
+        }
+
+        public uint this[int i]
+        {
+            get
+            {
+                if (i > 15) throw new IndexOutOfRangeException();
+                //  0-7: Data
+                // 8-15: Address
+                return i < 8 ? dataRegisters[i - 7] : addressRegisters[i];
+            }
         }
     }
 }
