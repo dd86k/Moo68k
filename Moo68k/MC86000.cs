@@ -980,24 +980,7 @@ namespace Moo68k
 
                                         break;
                                     case 7:
-                                        switch (eareg)
-                                        {
-                                            case 0: // 000 (xxx).W
 
-                                                break;
-                                            case 1: // 001 (xxx).L
-
-                                                break;
-                                            case 2: // 010 (d16, PC)
-
-                                                break;
-                                            case 3: // 011 (d8, PC, Xn)
-
-                                                break;
-                                            case 4: // 100 #<data>
-                                                dataRegisters[reg] += operand;
-                                                break;
-                                        }
                                         break;
                                 }
                                 break;
@@ -1162,7 +1145,7 @@ namespace Moo68k
                 if (i > 15) throw new IndexOutOfRangeException();
                 //  0-7: Data
                 // 8-15: Address
-                return i < 8 ? dataRegisters[i - 7] : addressRegisters[i];
+                return i < 8 ? dataRegisters[i] : addressRegisters[i - 8];
             }
         }
     }

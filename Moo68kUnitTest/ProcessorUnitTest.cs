@@ -134,6 +134,16 @@ namespace Moo86kUnitTest
             m68k.Execute(0x9282);
 
             Assert.AreEqual(42u, m68k.D1);
+
+            // SUBQ.L 4,D1
+            m68k.Execute(0x5981);
+
+            Assert.AreEqual(38u, m68k.D1);
+
+            // SUBQ.L 8,D1
+            m68k.Execute(0x5181);
+
+            Assert.AreEqual(30u, m68k.D1);
         }
 
         [TestMethod]
