@@ -123,16 +123,26 @@ namespace Moo86kUnitTest
 
             Assert.AreEqual(42u, m68k.D1);
         }
-    }
 
-    [TestClass]
-    public class Moo86kToolsUnitTest
-    {
         [TestMethod]
-        [TestCategory("Tools")]
-        public void TestCompiler()
+        [TestCategory("Processor")]
+        public void TestBitRotation()
         {
+            MC86000 m68k = new MC86000();
 
+            // Move immidiate value long 4 into register D0
+            m68k.Execute(0x203C, 4);
+
+            // Rotate long D0 to the left for 4 bits immidiately
+            m68k.Execute(0xE990);
+
+            Assert.AreEqual(64u, m68k.D0); //  4 << 4 = 64
+
+            // Rotate long D0 to the right from D1 (2 bits)
+            m68k.Execute(0x223C, 2); // 2 into D1
+            m68k.Execute(0xE2B0); // Fails
+            
+            Assert.AreEqual(16u, m68k.D0); // 64 >> 2 = 16
         }
     }
 }

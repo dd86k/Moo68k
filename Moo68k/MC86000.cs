@@ -72,6 +72,10 @@ namespace Moo68k
             get { return dataRegisters[7]; }
             private set { dataRegisters[7] = value; }
         }
+        public uint[] DataRegisters
+        {
+            get { return dataRegisters; }
+        }
         uint[] dataRegisters;
         
         /* Address registers */
@@ -116,6 +120,10 @@ namespace Moo68k
             get { return addressRegisters[7]; }
             private set { addressRegisters[7] = value; }
         }
+        public uint[] AddressRegisters
+        {
+            get { return addressRegisters; }
+        }
         uint[] addressRegisters;
 
         /* What to do with those three?
@@ -140,7 +148,7 @@ namespace Moo68k
         /// T1 T0  S  M  0 I2 I1 I0  0  0  0  X  N  Z  V  C
         ///  0  0  1  0  0  1  1  1  0  0  0  0  0  0  0  0 - Reset (0x2700)
         /// |---------------------|  |--------------------|
-        ///       System byte           User byte (CCR)
+        ///       System byte            User byte (CCR)
         /// --
         /// T1, T0 - TRACE MODE
         ///  0   0 - NO TRACE
@@ -355,7 +363,7 @@ namespace Moo68k
             if (FlagTracingEnabled)
                 Trace.WriteLine($"{PC:X8}  {opcode:X4}  {operand:X8}");
 
-            // [0000]0000 0000 0000
+            // nnnn 0000 0000 0000
             // Operation Code
             uint oc = (opcode >> 12) & 0xF;
 
@@ -638,12 +646,12 @@ namespace Moo68k
                 case 7:
                     {
                         // Page 4-134
-                        // Register 0111 nnn0 0000 0000
-                        // Data     0111 0000 nnnn nnnn
-                        uint data = opcode & 0xFF;
+                        // Register nnn0 0000 0000
+                        // Data     0000 nnnn nnnn
+                        int data = (int)(opcode & 0xFF);
 
-                        dataRegisters[(opcode >> 9) & 7] = data;
-
+                        dataRegisters[(opcode >> 9) & 7] = (uint)data;
+                        
                         FlagIsNegative = data < 0;
                         FlagIsZero = data == 0;
                         FlagIsCarry = false;
@@ -839,8 +847,7 @@ namespace Moo68k
                 #region 1101 - ADD/ADDX
                 case 13:
                     {
-
-                        // Page 4-174
+                        // Page 4-4
                         // Register                   1001 nnn 000 000 000
                         uint reg = (opcode >> 9) & 7;
 
@@ -994,13 +1001,56 @@ namespace Moo68k
                 #region 1110 - Shift/Rotate/Bit Field
                 case 14:
                     {
+                        // Count or register nnn 0 00 0 XX 000
+                        uint rotation = (opcode >> 9) & 7;
+
+                        // Direction (R=0)   000 n 00 0 XX 000
+                        uint direction = (opcode >> 8) & 1;
+
+                        // Size              000 0 nn 0 XX 000
+                        uint size = (opcode >> 6) & 3;
+
+                        // Register          000 0 00 0 XX nnn
+                        uint reg = opcode & 7;
+
+                        // I/R field         000 0 00 n XX 000
+                        switch (opcode & 32)
+                        {
+                            case 0: // Immidiate
+                                switch (direction)
+                                {
+                                    case 0: // Right
+                                        dataRegisters[reg] >>=
+                                            rotation > 0 ? (int)rotation : 8;
+                                        break;
+                                    case 1: // Left
+                                        dataRegisters[reg] <<=
+                                            rotation > 0 ? (int)rotation : 8;
+                                        break;
+                                }
+                                break;
+
+                            case 32: // Register
+                                switch (direction)
+                                {
+                                    case 0:
+                                        dataRegisters[reg] >>=
+                                            (int)(dataRegisters[rotation] % 64);
+                                        break;
+                                    case 1:
+                                        dataRegisters[reg] <<=
+                                            (int)(dataRegisters[rotation] % 64);
+                                        break;
+                                }
+                                break;
+                        }
 
                     }
                     break;
                 #endregion
                 
                 #region 1111 - Coprocessor Interface/MC68040 and CPU32 Extensions
-                /* Does the MC86000 even use this? I doubt. */
+                /* Does the MC86000 even use this? I doubt so. */
                 case 15:
                     {
                         
