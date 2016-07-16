@@ -7,9 +7,4 @@ All references in code are referenced by page number, and article from the manua
 
 The wiki will include a list of working instructions.
 
-**Notes:**
-
-- The emulator is still a work in progress, not in an useable state.
-- I'm a slow worker, I often get distracted, but I don't mind.
-- Irregular updates (for now).
-- No regrets.
+Please note that the interpreter is filed with bugs, since it is incomplete, so it is not ready for generic use.

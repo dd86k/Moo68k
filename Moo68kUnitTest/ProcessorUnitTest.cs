@@ -156,6 +156,7 @@ namespace Moo86kUnitTest
             m68k.Execute(0x203C, 4);
 
             // Rotate long D0 to the left for 4 bits immidiately
+            // ROXL 4,D0
             m68k.Execute(0xE990);
 
             Assert.AreEqual(64u, m68k.D0); //  4 << 4 = 64
@@ -163,9 +164,19 @@ namespace Moo86kUnitTest
             m68k.Execute(0x223C, 2); // 2 -> D1
 
             // Rotate long D0 to the right from D1 (2 bits)
+            // ROXL D1,D0
             m68k.Execute(0xE2B0);
-            
+
             Assert.AreEqual(16u, m68k.D0); // 64 >> 2 = 16
+        }
+
+        [TestMethod]
+        [TestCategory("Processor")]
+        public void TestBitManipulation()
+        {
+            MC86000 m68k = new MC86000();
+
+
         }
     }
 }
