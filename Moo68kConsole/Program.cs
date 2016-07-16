@@ -10,11 +10,6 @@ namespace Moo86kConsole
         {
             WriteLine("Creating MC86000...");
             MC86000 m68k = new MC86000();
-            
-            m68k.Execute(0x203C, 4);
-            m68k.Execute(0xE990);
-            m68k.Execute(0x223C, 2); // 2 into D1
-            m68k.Execute(0xE2B0);
 
             m68k.FlagIsSupervisor = true;
             //m68k.FlagTracingEnabled = true;
@@ -27,7 +22,7 @@ namespace Moo86kConsole
             Random r = new Random();
             while (true)
             {
-                System.Threading.Thread.Sleep(100);
+                System.Threading.Thread.Sleep(150);
 
                 // Operation code
                 ushort op = (ushort)r.Next(ushort.MaxValue);

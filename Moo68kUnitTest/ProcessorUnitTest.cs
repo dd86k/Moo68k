@@ -138,9 +138,10 @@ namespace Moo86kUnitTest
 
             Assert.AreEqual(64u, m68k.D0); //  4 << 4 = 64
 
+            m68k.Execute(0x223C, 2); // 2 -> D1
+
             // Rotate long D0 to the right from D1 (2 bits)
-            m68k.Execute(0x223C, 2); // 2 into D1
-            m68k.Execute(0xE2B0); // Fails
+            m68k.Execute(0xE2B0);
             
             Assert.AreEqual(16u, m68k.D0); // 64 >> 2 = 16
         }
