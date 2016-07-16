@@ -365,7 +365,45 @@ namespace Moo68k
                 #region 0000 - Bit manipulation
                 case 0:
                     {
+                        switch (opcode & 0x100) // 000 n00 000 000
+                        {
+                            case 0:
+                                switch (opcode & 0xE00) // nnn 000 000 000
+                                {
+                                    case 0: // ORI
 
+                                        break;
+
+                                    case 0x200: // ANDI
+
+                                        break;
+
+                                    case 0x400: // SUBI
+
+                                        break;
+
+                                    case 0x600: // ADDI
+
+                                        break;
+
+                                    case 0x800: // BTST, BCHG, BCLR, BSET
+
+                                        break;
+
+                                    case 0xA00: // EORI
+
+                                        break;
+
+                                    case 0xC00: // CMPI
+
+                                        break;
+                                }
+                                break;
+
+                            case 0x100: // BTST, BCHG, BCLR, BSET, MOVEP
+
+                                break;
+                        }
                     }
                     break;
                 #endregion
@@ -575,7 +613,7 @@ namespace Moo68k
                                 * The MC68000 and MC68008 cannot write the vector
                                 * offset and format code to the system stack. */
 
-
+                                TRAP(4);
 
                                 break;
                             case 0x4E70: // RESET
@@ -897,7 +935,7 @@ namespace Moo68k
                 #region 1010 - Unassigned, Reserved
                 case 10:
                     {
-
+                        // Trigger illegal?
                     }
                     break;
                 #endregion
@@ -980,7 +1018,24 @@ namespace Moo68k
 
                                         break;
                                     case 7:
+                                        switch (eareg)
+                                        {
+                                            case 0: // 000 (xxx).W
 
+                                                break;
+                                            case 1: // 001 (xxx).L
+
+                                                break;
+                                            case 2: // 010 (d16, PC)
+
+                                                break;
+                                            case 3: // 011 (d8, PC, Xn)
+
+                                                break;
+                                            case 4: // 100 #<data>
+                                                dataRegisters[reg] += operand;
+                                                break;
+                                        }
                                         break;
                                 }
                                 break;
@@ -1101,7 +1156,6 @@ namespace Moo68k
                                 }
                                 break;
                         }
-
                     }
                     break;
                 #endregion
