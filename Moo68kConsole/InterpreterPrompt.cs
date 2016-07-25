@@ -123,7 +123,7 @@ namespace Moo68kConsole
                             WriteLine($" A4={m68k.A4:X8}  A5={m68k.A5:X8}  A6={m68k.A6:X8}");
                             WriteLine($" USP={m68k.USP:X6}  SSP={m68k.SSP:X6}  SR={m68k.SR:X4}");
                             WriteLine();
-                            WriteLine($"{m68k.PC:X8}");
+                            WriteLine($" PC={m68k.PC:X6}");
                             break;
 
                         case 'q': // Quit
