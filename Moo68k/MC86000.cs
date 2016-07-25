@@ -21,7 +21,7 @@ namespace Moo68k
     /// Data width: 16 b
     /// Address width: 24 b
     /// </remarks>
-    public class MC86000
+    public class MC68000
     {
         // Constants ⁄(⁄ ⁄•⁄ω⁄•⁄ ⁄)⁄
 
@@ -111,21 +111,35 @@ namespace Moo68k
             get { return addressRegisters[6]; }
             private set { addressRegisters[6] = value; }
         }
+        /*
         public uint A7
         {
             get { return addressRegisters[7]; }
-            private set { addressRegisters[7] = value; }
+            private set { addressRegisters[6] = value; }
         }
+        */
         uint[] addressRegisters;
 
-        /* What to do with those three?
-         * Only one register is active, but..
-         * Eh
-         */
+        /*
+        Manual: 1.3.1 Address Register 7 (A7)
+In the supervisor programming model register, A7 refers to the interrupt stack pointer,
+A7’(ISP) and the master stack pointer, A7" (MSP). The supervisor stack pointer is the active
+stack pointer (ISP or MSP). For processors that do not support ISP or MSP, the system stack
+is the system stack pointer (SSP). The ISP and MSP are general- purpose address registers
+for the supervisor mode. They can be used as software stack pointers, index registers, or
+base address registers. The ISP and MSP can be used for word and long-word operations.
+
+
+        */
+
         /// <summary>
-        /// Stack Pointer
+        /// User Stack Pointer (A7')
         /// </summary>
-        public uint SP { get; private set; }
+        public uint USP { get; private set; }
+        /// <summary>
+        /// System/Supervisor Stack Pointer (A7")
+        /// </summary>
+        public uint SSP { get; private set; }
         /// <summary>
         /// Program Counter (24-bit)
         /// </summary>
@@ -273,12 +287,12 @@ namespace Moo68k
         /// Constructs a new MC86000.
         /// </summary>
         /// <param name="memorysize">Optional memory size in bytes.</param>
-        public MC86000(int memorysize = 0xFFFF)
+        public MC68000(int memorysize = 0xFFFF)
         {
             Trace.AutoFlush = true;
 
             dataRegisters = new uint[8];
-            addressRegisters = new uint[8];
+            addressRegisters = new uint[7];
 
             Memory = new MemoryModule(memorysize);
 
@@ -295,7 +309,7 @@ namespace Moo68k
         /// </summary>
         public void Reset()
         {
-            A7 = SP = Memory.ReadULong(0);
+            SSP = USP = Memory.ReadULong(0);
 
             PC = Memory.ReadULong(4);
 
@@ -325,23 +339,11 @@ namespace Moo68k
             //TODO: InterpretSRecord(string)
         }
 
-        /// <summary>
-        /// Seperate the operation code from the operand and execute.
-        /// </summary>
-        /// <param name="instruction">Combined instruction.</param>
-        public void Execute(ulong instruction)
-        {
-            Execute((uint)(instruction >> 32), (uint)(instruction & 0xFFFFFFFF));
-        }
-
-        /// <summary>
-        /// Seperate the operation code from the operand and execute.
-        /// </summary>
-        /// <param name="instruction">Combined instruction.</param>
-        public void Execute(long instruction)
-        {
-            Execute((uint)(instruction >> 32), (uint)(instruction & 0xFFFFFFFF));
-        }
+        /* Should base myself on this soon:
+         *   +- Fetch -> Execute -+
+         *   |                    |
+         *   +--------<-----------+
+         */
 
         /// <summary>
         /// Execute an operation code with an optional operand.
@@ -354,24 +356,26 @@ namespace Moo68k
 
             if (FlagTracingEnabled)
                 Trace.WriteLine($"{PC:X8}  {opcode:X4}  {operand:X8}");
-
-            // nnnn 0000 0000 0000
-            // Operation Code
-            uint oc = (opcode >> 12) & 0xF;
-
+            
+            // Operation Code | nnnn 0000 0000 0000
             // Page 8-4, 8.2 OPERATION CODE MAP
-            switch (oc)
+            switch (opcode & 0xF000)
             {
                 #region 0000 - Bit manipulation
                 case 0:
                     {
-                        switch (opcode & 0x100) // 000 n00 000 000
+                        switch (opcode & 0x100) // 000n 0000 0000
                         {
                             case 0:
-                                switch (opcode & 0xE00) // nnn 000 000 000
+                                switch (opcode & 0xE00) // nnn0 0000 0000
                                 {
                                     case 0: // ORI
-
+                                        {
+                                            // 0nn 000 000
+                                            uint size = (opcode >> 6) & 3;
+                                            uint eamode = (opcode >> 3) & 7;
+                                            uint eareg = opcode & 7;
+                                        }
                                         break;
 
                                     case 0x200: // ANDI
@@ -409,9 +413,9 @@ namespace Moo68k
                 #endregion
                 
                 #region 0001~0011 - Move
-                case 1: // Move byte
-                case 2: // Move long
-                case 3: // Move word
+                case 0x1000: // Move byte
+                case 0x2000: // Move long
+                case 0x3000: // Move word
                     {
                         // Size, Page 4-116
                         uint sz = (opcode >> 12) & 3; // 00[00]000 000 000 000
@@ -598,7 +602,7 @@ namespace Moo68k
                 #endregion 0001~0011
                 
                 #region 0100 - Miscellaneous
-                case 4:
+                case 0x4000:
                     {
                         // Some constant opcodes
                         switch (opcode)
@@ -657,7 +661,7 @@ namespace Moo68k
                 #endregion
                 
                 #region 0101 - ADDQ/SUBQ/Scc/DBcc/TRAPcc
-                case 5:
+                case 0x5000:
                     {
                         // Effective Address mode
                         uint eamode = (opcode >> 3) & 7;
@@ -747,7 +751,7 @@ namespace Moo68k
                 #endregion
                 
                 #region 0110 - Bcc/BSR/BRA
-                case 6:
+                case 0x6000:
                     {
 
                     }
@@ -755,7 +759,7 @@ namespace Moo68k
                 #endregion
                 
                 #region 0111 - MOVEQ
-                case 7:
+                case 0x7000:
                     {
                         // Page 4-134
                         // Register nnn0 0000 0000
@@ -764,7 +768,7 @@ namespace Moo68k
 
                         dataRegisters[(opcode >> 9) & 7] = (uint)data;
                         
-                        FlagIsNegative = data < 0;
+                        FlagIsNegative = (data & 0x8000000) != 0;
                         FlagIsZero = data == 0;
                         FlagIsCarry = false;
                         FlagIsOverflow = false;
@@ -773,7 +777,7 @@ namespace Moo68k
                 #endregion
                 
                 #region 1000 - OR/DIV/SBCD
-                case 8:
+                case 0x8000:
                     {
 
                     }
@@ -781,7 +785,7 @@ namespace Moo68k
                 #endregion
                 
                 #region 1001 - SUB/SUBX/SUBA
-                case 9:
+                case 0x9000:
                     {
                         // Page 4-174
                         // Register                   1001 nnn 000 000 000
@@ -933,7 +937,7 @@ namespace Moo68k
                 #endregion
                 
                 #region 1010 - Unassigned, Reserved
-                case 10:
+                case 0xA000:
                     {
                         // Trigger illegal?
                     }
@@ -941,7 +945,7 @@ namespace Moo68k
                 #endregion
                 
                 #region 1011 - CMP/EOR
-                case 11:
+                case 0xB000:
                     {
 
                     }
@@ -949,7 +953,7 @@ namespace Moo68k
                 #endregion
                 
                 #region 1100 - AND/MUL/ABCD/EXG
-                case 12:
+                case 0xC000:
                     {
 
                     }
@@ -957,7 +961,7 @@ namespace Moo68k
                 #endregion
                 
                 #region 1101 - ADD/ADDX
-                case 13:
+                case 0xD000:
                     {
                         // Page 4-4
                         // Register                   1001 nnn 000 000 000
@@ -1111,7 +1115,7 @@ namespace Moo68k
                 #endregion
                 
                 #region 1110 - Shift/Rotate/Bit Field
-                case 14:
+                case 0xE000:
                     {
                         // Count or register nnn 0 00 0 XX 000
                         uint rotation = (opcode >> 9) & 7;
@@ -1162,7 +1166,7 @@ namespace Moo68k
                 
                 #region 1111 - Coprocessor Interface/MC68040 and CPU32 Extensions
                 /* Does the MC86000 even use this? I doubt so. */
-                case 15:
+                case 0xF000:
                     {
                         
                     }

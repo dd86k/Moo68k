@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Moo68k
+namespace Moo68k.Tools
 {
     /// <summary>
     /// Compilers, decompilers, S-Record file maker, etc.
@@ -48,12 +48,100 @@ namespace Moo68k
                 using (StreamWriter sw = new StreamWriter(path, false, encoding))
                 {
 
-
-
                 }
             }
         }
 
+        public static int HexStringToInt(this string s)
+        {
+            s = PrepareHexString(s);
 
+            if (s.Length > 8)
+                s = s.Substring(s.Length - 8);
+
+            return (int)HexToULong(s);
+        }
+
+        public static uint HexStringToUInt(this string s)
+        {
+            s = PrepareHexString(s);
+
+            if (s.Length > 8)
+                s = s.Substring(s.Length - 8);
+
+            return (uint)HexToULong(s);
+        }
+
+        public static long HexStringToLong(this string s)
+        {
+            s = PrepareHexString(s);
+
+            if (s.Length > 16)
+                s = s.Substring(s.Length - 16);
+
+            return (long)HexToULong(s);
+        }
+
+        public static ulong HexStringToULong(this string s)
+        {
+            s = PrepareHexString(s);
+
+            if (s.Length > 16)
+                s = s.Substring(s.Length - 16);
+
+            return HexToULong(s);
+        }
+
+        static string PrepareHexString(string s)
+        {
+            // Lazy
+            return
+                s.Trim()
+                .Replace("0x", "")
+                .Replace("_", "")
+                .TrimEnd('H', 'h', 'U', 'u', 'L', 'l');
+        }
+
+        static ulong HexToULong(string s)
+        {
+            ulong o = 0;
+
+            for (int i = s.Length - 1, h = 0; i >= 0; --i, ++h)
+            {
+                switch (s[i])
+                {
+                    // Ignore section
+                    case '0':
+                        break;
+
+                    case '1': o |= (ulong)0x1 << (h * 4); break;
+                    case '2': o |= (ulong)0x2 << (h * 4); break;
+                    case '3': o |= (ulong)0x3 << (h * 4); break;
+                    case '4': o |= (ulong)0x4 << (h * 4); break;
+                    case '5': o |= (ulong)0x5 << (h * 4); break;
+                    case '6': o |= (ulong)0x6 << (h * 4); break;
+                    case '7': o |= (ulong)0x7 << (h * 4); break;
+                    case '8': o |= (ulong)0x8 << (h * 4); break;
+                    case '9': o |= (ulong)0x9 << (h * 4); break;
+                    case 'A':
+                    case 'a': o |= (ulong)0xA << (h * 4); break;
+                    case 'B':
+                    case 'b': o |= (ulong)0xB << (h * 4); break;
+                    case 'C':
+                    case 'c': o |= (ulong)0xC << (h * 4); break;
+                    case 'D':
+                    case 'd': o |= (ulong)0xD << (h * 4); break;
+                    case 'E':
+                    case 'e': o |= (ulong)0xE << (h * 4); break;
+                    case 'F':
+                    case 'f': o |= (ulong)0xF << (h * 4); break;
+
+                    default:
+                        throw new ArgumentException();
+                }
+            }
+
+            return o;
+        }
     }
 }

@@ -11,14 +11,16 @@ namespace Moo86kUnitTest
         [TestCategory("Processor")]
         public void TestInput()
         {
+            MC68000 m68k = new MC68000();
 
+            Assert.AreEqual(0x2700u, m68k.SR);
         }
 
         [TestMethod]
         [TestCategory("Processor")]
         public void TestRegisters()
         {
-            MC86000 m68k = new MC86000();
+            MC68000 m68k = new MC68000();
 
             // Data
             m68k.Execute(0x203C, 1);
@@ -53,8 +55,8 @@ namespace Moo86kUnitTest
             Assert.AreEqual(16u, m68k.A5);
             m68k.Execute(0x2CBC, 17);
             Assert.AreEqual(17u, m68k.A6);
-            m68k.Execute(0x2EBC, 18);
-            Assert.AreEqual(18u, m68k.A7);
+            /*m68k.Execute(0x2CBC, 18);
+            Assert.AreEqual(17u, m68k.A7);*/
 
             // The next two instructions is from a manual (mbsd_l2.pdf) from
             // Ricardo Gutierrez-Osuna, Wright State University
@@ -82,7 +84,7 @@ namespace Moo86kUnitTest
         [TestCategory("Processor")]
         public void TestAddition()
         {
-            MC86000 m68k = new MC86000();
+            MC68000 m68k = new MC68000();
 
             // Move immidiate value long 4 into register D0
             m68k.Execute(0x203C, 4);
@@ -117,7 +119,7 @@ namespace Moo86kUnitTest
         [TestCategory("Processor")]
         public void TestSubtraction()
         {
-            MC86000 m68k = new MC86000();
+            MC68000 m68k = new MC68000();
 
             // Move immidiate value long 73 into register D0
             m68k.Execute(0x203C, 73);
@@ -148,9 +150,21 @@ namespace Moo86kUnitTest
 
         [TestMethod]
         [TestCategory("Processor")]
-        public void TestBitRotation()
+        public void TestBitwiseOperations()
         {
-            MC86000 m68k = new MC86000();
+            // AND, OR, etc.
+            MC68000 m68k = new MC68000();
+            
+            m68k.Execute(0x203C, 0x11);
+
+            // ORI #$10,D0
+        }
+
+        [TestMethod]
+        [TestCategory("Processor")]
+        public void TestBitShifting()
+        {
+            MC68000 m68k = new MC68000();
 
             // Move immidiate value long 4 into register D0
             m68k.Execute(0x203C, 4);
@@ -168,15 +182,6 @@ namespace Moo86kUnitTest
             m68k.Execute(0xE2B0);
 
             Assert.AreEqual(16u, m68k.D0); // 64 >> 2 = 16
-        }
-
-        [TestMethod]
-        [TestCategory("Processor")]
-        public void TestBitManipulation()
-        {
-            MC86000 m68k = new MC86000();
-
-
         }
     }
 }

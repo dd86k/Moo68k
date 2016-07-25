@@ -35,8 +35,10 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InterpreterPrompt.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RandomTester.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

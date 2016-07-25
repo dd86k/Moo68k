@@ -7,6 +7,11 @@ namespace Moo68k
     /// <summary>
     /// Represents a memory module.
     /// </summary>
+    /// <remarks>
+    /// Remember, Big Endianess:
+    /// Highest byte is stored first, then going up in memory,
+    /// the lower bytes will rest.
+    /// </remarks>
     public class MemoryModule
     {
         public MemoryModule(int capacity = 0xFFFF)
