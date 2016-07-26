@@ -168,14 +168,17 @@ namespace Moo68kConsole
 
                                     case 2:
                                         {
-                                            uint oc;
-                                            uint op;
-
-                                            if (uint.TryParse(s[0], out oc) &&
-                                                uint.TryParse(s[1], out op))
-                                                m68k.Execute(oc, op);
-                                            else
+                                            try
+                                            {
+                                                m68k.Execute(
+                                                    s[0].HexStringToUInt(),
+                                                    s[1].HexStringToUInt()
+                                                );
+                                            }
+                                            catch
+                                            {
                                                 WriteLine("Couldn't parse operation code or operand.");
+                                            }
                                         }
                                         break;
 

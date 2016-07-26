@@ -111,34 +111,44 @@ namespace Moo68k
             get { return addressRegisters[6]; }
             private set { addressRegisters[6] = value; }
         }
-        /*
         public uint A7
         {
-            get { return addressRegisters[7]; }
-            private set { addressRegisters[6] = value; }
+            get { return FlagIsSupervisor ? SSP : USP; }
+            /*private set { addressRegisters[6] = value; }*/
         }
-        */
         uint[] addressRegisters;
 
-        /*
-        Manual: 1.3.1 Address Register 7 (A7)
+        /** TODO: Do even more research on the A7 register.
+        Manual
+        
+        1.1.2 Address Registers (A7 – A0)
+[...] Register A7 is used as a hardware stack pointer during stacking for subroutine calls and
+exception handling. In the user programming model, A7 refers to the user stack pointer
+(USP).
+
+        1.3.1 Address Register 7 (A7)
 In the supervisor programming model register, A7 refers to the interrupt stack pointer,
 A7’(ISP) and the master stack pointer, A7" (MSP). The supervisor stack pointer is the active
 stack pointer (ISP or MSP). For processors that do not support ISP or MSP, the system stack
 is the system stack pointer (SSP). The ISP and MSP are general- purpose address registers
 for the supervisor mode. They can be used as software stack pointers, index registers, or
 base address registers. The ISP and MSP can be used for word and long-word operations.
-
-
         */
 
         /// <summary>
         /// User Stack Pointer (A7')
         /// </summary>
+        /// <remarks>
+        /// ISP, A7'
+        /// </remarks>
         public uint USP { get; private set; }
         /// <summary>
-        /// System/Supervisor Stack Pointer (A7")
+        /// System Stack Pointer (A7")
         /// </summary>
+        /// <remarks>
+        /// MSP, A7"
+        /// Also called the Supervisor Stack Pointer.
+        /// </remarks>
         public uint SSP { get; private set; }
         /// <summary>
         /// Program Counter (24-bit)
@@ -151,8 +161,8 @@ base address registers. The ISP and MSP can be used for word and long-word opera
         /// <remarks>
         /// Page 1-11, 1.3.2
         /// 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
-        /// T1 T0  S  M  0 I2 I1 I0  0  0  0  X  N  Z  V  C
-        ///  0  0  1  0  0  1  1  1  0  0  0  0  0  0  0  0 - Reset (0x2700)
+        /// T1 T0  S  M  0 I2 I1 I0  0  0  0  X  N  Z  V  C   Reset default
+        ///  0  0  1  0  0  1  1  1  0  0  0  0  0  0  0  0 - 0x2700
         /// |---------------------|  |--------------------|
         ///       System byte            User byte (CCR)
         /// --
@@ -291,8 +301,8 @@ base address registers. The ISP and MSP can be used for word and long-word opera
         {
             Trace.AutoFlush = true;
 
-            dataRegisters = new uint[8];
-            addressRegisters = new uint[7];
+            dataRegisters = new uint[8];    // 0-7
+            addressRegisters = new uint[7]; // 0-6
 
             Memory = new MemoryModule(memorysize);
 
@@ -314,11 +324,6 @@ base address registers. The ISP and MSP can be used for word and long-word opera
             PC = Memory.ReadULong(4);
 
             SR = SR_INIT;
-        }
-
-        public void Step()
-        {
-            //TODO: Step(void)
         }
 
         /// <summary>
@@ -343,6 +348,8 @@ base address registers. The ISP and MSP can be used for word and long-word opera
          *   +- Fetch -> Execute -+
          *   |                    |
          *   +--------<-----------+
+         *   
+         *   Consider a "Push(uint, uint = 0);", based on the above graph.
          */
 
         /// <summary>
