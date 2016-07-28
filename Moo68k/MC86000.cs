@@ -380,8 +380,56 @@ base address registers. The ISP and MSP can be used for word and long-word opera
                                         {
                                             // 0nn 000 000
                                             uint size = (opcode >> 6) & 3;
-                                            uint eamode = (opcode >> 3) & 7;
+                                            
+                                            // 000 000 nnn
                                             uint eareg = opcode & 7;
+                                            
+                                            // 000 nnn 000
+                                            switch (opcode & 0x56) // EAMODE
+                                            {
+                                                case 0:    // 000
+                                                    switch (size)
+                                                    {
+                                                        case 0:
+                                                            dataRegisters[eareg] |= (byte)operand;
+                                                            break;
+                                                        case 1:
+                                                            dataRegisters[eareg] |= (ushort)operand;
+                                                            break;
+                                                        case 2:
+                                                            dataRegisters[eareg] |= operand;
+                                                            break;
+                                                    }
+                                                    break;
+
+                                                case 0x8:  // 001
+
+                                                    break;
+
+                                                case 0x16: // 010
+
+                                                    break;
+
+                                                case 0x24: // 011
+
+                                                    break;
+
+                                                case 0x32: // 100
+
+                                                    break;
+
+                                                case 0x40: // 101
+
+                                                    break;
+
+                                                case 0x48: // 110
+
+                                                    break;
+
+                                                case 0x56: // 111
+
+                                                    break;
+                                            }
                                         }
                                         break;
 

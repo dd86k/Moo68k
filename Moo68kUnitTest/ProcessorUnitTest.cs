@@ -155,9 +155,12 @@ namespace Moo86kUnitTest
             // AND, OR, etc.
             MC68000 m68k = new MC68000();
             
-            m68k.Execute(0x203C, 0x11);
+            m68k.Execute(0x203C, 0x50); // D0: $50
 
-            // ORI #$10,D0
+            // ORI.L #$10,D0
+            m68k.Execute(0x80, 0x12);
+
+            Assert.AreEqual(0x52u, m68k.D0);
         }
 
         [TestMethod]

@@ -20,20 +20,23 @@ namespace Moo68kUnitTest
         {
             // Int
 
+            Assert.AreEqual(0, "0".HexStringToInt());
             Assert.AreEqual(15, "0x_F".HexStringToInt());
             Assert.AreEqual(291, "0x123".HexStringToInt());
             Assert.AreEqual(32848, "8050".HexStringToInt());
 
             // Long
 
-            Assert.AreEqual(4294967296, "0x1_0000_0000ul".HexStringToLong());
+            Assert.AreEqual(uint.MaxValue, "0xFFFF_FFFF".HexStringToLong());
+            Assert.AreEqual(-1, "0xFFFF_FFFF_FFFF_FFFF".HexStringToLong());
 
             // ULong
 
-            Assert.AreEqual(4294967296u, "0x1_0000_0000ul".HexStringToULong());
+            Assert.AreEqual(uint.MaxValue, "0xFFFF_FFFF".HexStringToULong());
+            Assert.AreEqual(ulong.MaxValue, "0xFFFF_FFFF_FFFF_FFFF".HexStringToULong());
 
             // Formatted hex strings longer than 16 characters are trimmed off.
-            Assert.AreEqual(ulong.MaxValue, "0xF_FFFF_FFFF_FFFF_FFFFul".HexStringToULong());
+            Assert.AreEqual(ulong.MaxValue, "0xFAC_FFFF_FFFF_FFFF_FFFFul".HexStringToULong());
         }
     }
 }

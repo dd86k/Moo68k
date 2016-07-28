@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace Moo68k.Tools
 {
@@ -29,17 +30,19 @@ namespace Moo68k.Tools
                 throw new NotImplementedException();
             }
 
-            public static void CompileToFile(string source, string path)
+            public static void CompileToSRecord(string source, string path)
             {
-                CompileToFile(source, path, FileFormat.S28, Encoding.ASCII);
+                CompileToSRecord(source, path, FileFormat.S28, Encoding.ASCII);
             }
 
-            public static void CompileToFile(string source, string path, FileFormat format)
+            public static void CompileToSRecord(string source, string path,
+                FileFormat format)
             {
-                CompileToFile(source, path, format, Encoding.ASCII);
+                CompileToSRecord(source, path, format, Encoding.ASCII);
             }
 
-            public static void CompileToFile(string source, string path, FileFormat format, Encoding encoding, bool capitalized = true)
+            public static void CompileToSRecord(string source, string path,
+                FileFormat format, Encoding encoding, bool capitalized = true)
             {
                 //TODO: CompileToFile(string)
 
@@ -56,64 +59,43 @@ namespace Moo68k.Tools
         {
             s = PrepareHexString(s);
 
-            if (s.Length > 8)
-                s = s.Substring(s.Length - 8);
-
-            return (int)HexToULong(s);
+            return (int)HexToULong(s.Length > 8 ? s.Substring(s.Length - 8) : s);
         }
 
         public static uint HexStringToUInt(this string s)
         {
             s = PrepareHexString(s);
 
-            if (s.Length > 8)
-                s = s.Substring(s.Length - 8);
-
-            return (uint)HexToULong(s);
+            return (uint)HexToULong(s.Length > 8 ? s.Substring(s.Length - 8) : s);
         }
 
         public static long HexStringToLong(this string s)
         {
             s = PrepareHexString(s);
 
-            if (s.Length > 16)
-                s = s.Substring(s.Length - 16);
-
-            return (long)HexToULong(s);
+            return (long)HexToULong(s.Length > 16 ? s.Substring(s.Length - 16) : s);
         }
 
         public static ulong HexStringToULong(this string s)
         {
             s = PrepareHexString(s);
 
-            if (s.Length > 16)
-                s = s.Substring(s.Length - 16);
-
-            return HexToULong(s);
+            return HexToULong(s.Length > 16 ? s.Substring(s.Length - 16) : s);
         }
 
-        static string PrepareHexString(string s)
-        {
-            // Lazy
-            return
-                s.Trim()
-                .Replace("0x", "")
-                .Replace("_", "")
-                .TrimEnd('H', 'h', 'U', 'u', 'L', 'l');
-        }
+        static Regex HexRegex = new Regex(@"[^\dA-Fa-f]",
+                RegexOptions.ECMAScript | RegexOptions.Compiled);
+        static string PrepareHexString(string s) => HexRegex.Replace(s, "");
 
         static ulong HexToULong(string s)
         {
             ulong o = 0;
 
-            for (int i = s.Length - 1, h = 0; i >= 0; --i, ++h)
+            for (int h = 0, i = s.Length - 1; i >= 0; --i, ++h)
             {
                 switch (s[i])
                 {
-                    // Ignore section
-                    case '0':
-                        break;
-
+                    case '0': break; // Ignore
                     case '1': o |= (ulong)0x1 << (h * 4); break;
                     case '2': o |= (ulong)0x2 << (h * 4); break;
                     case '3': o |= (ulong)0x3 << (h * 4); break;
@@ -136,8 +118,8 @@ namespace Moo68k.Tools
                     case 'F':
                     case 'f': o |= (ulong)0xF << (h * 4); break;
 
-                    default:
-                        throw new ArgumentException();
+                    default: // Should never happen, as the Regex takes everything else out.
+                        throw new ArgumentException($"'{s[i]}' is not a valid hexadecimal character.");
                 }
             }
 
