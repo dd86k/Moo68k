@@ -819,9 +819,9 @@ base address registers. The ISP and MSP can be used for word and long-word opera
                         // Page 4-134
                         // Register nnn0 0000 0000
                         // Data     0000 nnnn nnnn
-                        int data = (int)(opcode & 0xFF);
+                        uint data = (opcode & 0xFF);
 
-                        dataRegisters[(opcode >> 9) & 7] = (uint)data;
+                        dataRegisters[(opcode >> 9) & 7] = data;
                         
                         FlagIsNegative = (data & 0x8000000) != 0;
                         FlagIsZero = data == 0;
@@ -1255,9 +1255,8 @@ base address registers. The ISP and MSP can be used for word and long-word opera
         {
             get
             {
-                if (i > 15) throw new IndexOutOfRangeException();
-                //  0-7: Data
-                // 8-15: Address
+                if (i > 15 || i < 0) throw new IndexOutOfRangeException();
+                //  0-7: Data, 8-15: Address
                 return i < 8 ? dataRegisters[i] : addressRegisters[i - 8];
             }
         }
