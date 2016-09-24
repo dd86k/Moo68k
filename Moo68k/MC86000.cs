@@ -370,101 +370,101 @@ base address registers. The ISP and MSP can be used for word and long-word opera
             {
                 #region 0000 - Bit manipulation
                 case 0:
+                {
+                    switch (opcode & 0x100) // 000n 0000 0000
                     {
-                        switch (opcode & 0x100) // 000n 0000 0000
+                        case 0:
+                        switch (opcode & 0xE00) // nnn0 0000 0000
                         {
-                            case 0:
-                                switch (opcode & 0xE00) // nnn0 0000 0000
+                            case 0: // ORI
+                            {
+                                // 0nn 000 000
+                                uint size = (opcode >> 6) & 3;
+                                            
+                                // 000 000 nnn
+                                uint eareg = opcode & 7;
+                                            
+                                // 000 nnn 000
+                                switch (opcode & 0x56) // EAMODE
                                 {
-                                    case 0: // ORI
+                                    case 0:    // 000
+                                        switch (size)
                                         {
-                                            // 0nn 000 000
-                                            uint size = (opcode >> 6) & 3;
-                                            
-                                            // 000 000 nnn
-                                            uint eareg = opcode & 7;
-                                            
-                                            // 000 nnn 000
-                                            switch (opcode & 0x56) // EAMODE
-                                            {
-                                                case 0:    // 000
-                                                    switch (size)
-                                                    {
-                                                        case 0:
-                                                            dataRegisters[eareg] |= (byte)operand;
-                                                            break;
-                                                        case 1:
-                                                            dataRegisters[eareg] |= (ushort)operand;
-                                                            break;
-                                                        case 2:
-                                                            dataRegisters[eareg] |= operand;
-                                                            break;
-                                                    }
-                                                    break;
-
-                                                case 0x8:  // 001
-
-                                                    break;
-
-                                                case 0x16: // 010
-
-                                                    break;
-
-                                                case 0x24: // 011
-
-                                                    break;
-
-                                                case 0x32: // 100
-
-                                                    break;
-
-                                                case 0x40: // 101
-
-                                                    break;
-
-                                                case 0x48: // 110
-
-                                                    break;
-
-                                                case 0x56: // 111
-
-                                                    break;
-                                            }
+                                            case 0:
+                                                dataRegisters[eareg] |= (byte)operand;
+                                                break;
+                                            case 1:
+                                                dataRegisters[eareg] |= (ushort)operand;
+                                                break;
+                                            case 2:
+                                                dataRegisters[eareg] |= operand;
+                                                break;
                                         }
                                         break;
 
-                                    case 0x200: // ANDI
+                                    case 0x8:  // 001
 
                                         break;
 
-                                    case 0x400: // SUBI
+                                    case 0x16: // 010
 
                                         break;
 
-                                    case 0x600: // ADDI
+                                    case 0x24: // 011
 
                                         break;
 
-                                    case 0x800: // BTST, BCHG, BCLR, BSET
+                                    case 0x32: // 100
 
                                         break;
 
-                                    case 0xA00: // EORI
+                                    case 0x40: // 101
 
                                         break;
 
-                                    case 0xC00: // CMPI
+                                    case 0x48: // 110
+
+                                        break;
+
+                                    case 0x56: // 111
 
                                         break;
                                 }
+                            }
+                            break;
+
+                            case 0x200: // ANDI
+
                                 break;
 
-                            case 0x100: // BTST, BCHG, BCLR, BSET, MOVEP
+                            case 0x400: // SUBI
+
+                                break;
+
+                            case 0x600: // ADDI
+
+                                break;
+
+                            case 0x800: // BTST, BCHG, BCLR, BSET
+
+                                break;
+
+                            case 0xA00: // EORI
+
+                                break;
+
+                            case 0xC00: // CMPI
 
                                 break;
                         }
+                        break;
+
+                    case 0x100: // BTST, BCHG, BCLR, BSET, MOVEP
+
+                        break;
                     }
-                    break;
+                }
+                break;
                 #endregion
                 
                 #region 0001~0011 - Move
