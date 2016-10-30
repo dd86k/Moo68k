@@ -39,66 +39,66 @@ namespace Moo68k
 
         // Word / Unsigned Word
 
-        public short ReadWord(int address)
+        public unsafe short ReadWord(int address)
         {
-            return BitConverter.ToInt16(Bank, address);
+            fixed (byte* p = Bank)
+                return *((short*)p + (address / sizeof(short)));
         }
 
-        public short ReadWord(uint address)
+        public unsafe short ReadWord(uint address)
         {
-            return BitConverter.ToInt16(Bank, (int)address);
+            fixed (byte* p = Bank)
+                return *((short*)p + (address / sizeof(short)));
         }
 
-        public void WriteWord(int address, short value)
+        public unsafe ushort ReadUWord(int address)
         {
-            Write(address, BitConverter.GetBytes(value));
+            fixed (byte* p = Bank)
+                return *((ushort*)p + (address / sizeof(ushort)));
         }
 
-        public ushort ReadUWord(int address)
+        public unsafe void WriteWord(int address, short value)
         {
-            return BitConverter.ToUInt16(Bank, address);
+            fixed (byte* p = Bank)
+                *((short*)p + (address / sizeof(short))) = value;
         }
 
-        public void WriteUWord(int address, ushort value)
+        public unsafe void WriteUWord(int address, ushort value)
         {
-            Write(address, BitConverter.GetBytes(value));
+            fixed (byte* p = Bank)
+                *((ushort*)p + (address / sizeof(ushort))) = value;
         }
 
         // Long / Unsigned Long
 
-        public int ReadLong(int address)
+        public unsafe int ReadLong(int address)
         {
-            return BitConverter.ToInt32(Bank, address);
+            fixed (byte* p = Bank)
+                return *((int*)p + (address / sizeof(int)));
         }
 
-        public int ReadLong(uint address)
+        public unsafe int ReadLong(uint address)
         {
-            return BitConverter.ToInt32(Bank, (int)address);
+            fixed (byte* p = Bank)
+                return *((int*)p + (address / sizeof(int)));
         }
 
-        public void WriteLong(int address, int value)
+        public unsafe uint ReadULong(int address)
         {
-            Write(address, BitConverter.GetBytes(value));
+            fixed (byte* p = Bank)
+                return *((uint*)p + (address / sizeof(uint)));
         }
 
-        public uint ReadULong(int address)
+        public unsafe void WriteLong(int address, int value)
         {
-            return BitConverter.ToUInt32(Bank, address);
+            fixed (byte* p = Bank)
+                *((int*)p + (address / sizeof(int))) = value;
         }
 
-        public void WriteULong(int address, uint value)
+        public unsafe void WriteULong(int address, uint value)
         {
-            Write(address, BitConverter.GetBytes(value));
-        }
-
-        // Misc.
-
-        void Write(int address, byte[] bytes)
-        {
-            for (int i = 0; i < bytes.Length; ++i)
-            {
-                Bank[address + i] = bytes[i];
-            }
+            fixed (byte* p = Bank)
+                *((uint*)p + (address / sizeof(uint))) = value;
         }
 
         // Indexers
