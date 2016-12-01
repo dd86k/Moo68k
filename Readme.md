@@ -1,7 +1,7 @@
 # Moo68k
 ## A Motorola 68000 (m68k) emulator (interpreter) in C#.
 
-![Interpreter](https://guitarxhero.github.io/imgs/moo0.png)
+![Interpreter](https://dd86k.github.io/imgs/moo0.png)
 
 Please refer to the [Programmer Reference Manual](https://www.nxp.com/files/archives/doc/ref_manual/M68000PRM.pdf) (M68000PRM.pdf by Motorola) before addressing (pun intended) an issue.
 
